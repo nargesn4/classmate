@@ -6,7 +6,7 @@ import vlc
 """
 Class made for controlling a Speaker using an I2S board (specifically the MAX98357).
 
-connect the pins as following:
+Connect the pins as following:
     5V      -> Vin
     GND     -> GND
     PIN18   -> BCLK
@@ -69,9 +69,9 @@ class Speaker:
         self.p.pause()
    
 # example code
-doNotDisturbActivated = Speaker(60, "classmate/Resources/Audio/Testing/do_not_disturb_activated.mp3")
-doNotDisturbDeactivated = Speaker(60, "classmate/Resources/Audio/Testing/do_not_disturb_deactivated.mp3")
-demoAudio = Speaker(100, "classmate/Resources/Audio/Testing/demo_audio.mp3")
+doNotDisturbActivated = Speaker(60, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
+doNotDisturbDeactivated = Speaker(60, "Resources/Audio/Testing/do_not_disturb_deactivated.mp3")
+demoAudio = Speaker(100, "Resources/Audio/Testing/demo_audio.mp3")
 
 doNotDisturbActivated.play()
 time.sleep(2)
