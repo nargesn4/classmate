@@ -83,3 +83,27 @@ To use mh-z19, once you need to set up enabling serial port device on the Raspbe
 pi@raspberrypi:~ $ sudo python -m mh_z19 
 {'co2': 668}
 ```
+
+## DHT11 sensor (temperature and humidity)
+Sensor setup from left to right
+```
+1st pin = pin 14
+2nd pin = ground
+3rd pin = vcc 3.3V
+```
+
+Download the following extension:
+Pymakr
+
+How do install micropython on the esp32
+```
+# Download esptool
+git clone https://github.com/espressif/esptool.git -b v2.8
+cd esptool
+# Erase flash. Press the reset button while Connecting.
+python3 esptool.py --chip esp32 --port /dev/ttyUSB* erase_flash
+# Download the latest firmware release
+https://micropython.org/download/esp32/ 
+# Upload firmware to board
+python3 esptool.py --chip esp32 --port /dev/ttyUSB* --baud 460800 write_flash -z 0x1000 ** drop the firmware file in here **
+```
