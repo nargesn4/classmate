@@ -95,7 +95,7 @@ Sensor setup from left to right
 Download the following extension:
 Pymakr
 
-How do install micropython on the esp32
+How to install micropython on the esp32
 ```
 # Download esptool
 git clone https://github.com/espressif/esptool.git -b v2.8
