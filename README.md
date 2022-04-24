@@ -57,30 +57,22 @@ GND(0v) on RPi and GND on mh-z19
 TxD and RxD are connected to cross between RPi and mh-z18
 ```
 
-For necessary settings including serial port enabling run:
+For enabling serial port run:
 ```
-sudo apt-get install python3-pip git-core
-sudo pip3 install mh_z19 pondslider incremental_counter error_counter
-git clone https://github.com/UedaTakeyuki/handlers
-ln -s handlers/value/sender/send2monitor/send2monitor.py
 sudo sed -i "s/^enable_uart=.*/enable_uart=1/" /boot/config.txt
-read -p "Would you like to reboot now?  (y/n) :" YN
-if [ "${YN}" = "y" ]; then
-  sudo reboot
-else
-  exit 1;
-fi
 ```
-
 Install sensor:
 ```
 sudo pip3 install mh_z19
 ```
 To use mh-z19, once you need to set up enabling serial port device on the Raspberry Pi. Follow this [Wiki]( https://github.com/UedaTakeyuki/mh-z19/wiki/How-to-Enable-Serial-Port-hardware-on-the-Raspberry-Pi) page to do that.
 
-## read CO2 Sensor value
+### read CO2 Sensor value
 ```
-pi@raspberrypi:~ $ sudo python -m mh_z19 
+python Co2Sensor.py
+```
+You should see something like this: 
+```
 {'co2': 668}
 ```
 
@@ -139,6 +131,10 @@ pip install gas-detection==1.0.1
 Next type in the terminal:
 ```
 python app.py
+```
+You should see something like this: 
+```
+0.02436100935984771
 ```
 
 
