@@ -107,3 +107,39 @@ https://micropython.org/download/esp32/
 # Upload firmware to board
 python3 esptool.py --chip esp32 --port /dev/ttyUSB* --baud 460800 write_flash -z 0x1000 ** drop the firmware file in here **
 ```
+
+## Gas sensor
+### wiring
+
+from GPIO2 goes to LV1 and then from HV1 continues to SDA of ADS1115.
+
+Yellow wire from GPIO3 goes to LV2 and then from HV2 continues to SCL of ADS1115.
+
+MQ2's A0 (analog) pin is connected to A0 on ADS1115.
+
+Enable the I2C interface on our RPi, which is disabled by default. To enable I2C type:
+
+```
+sudo raspi-config
+```
+Under Interfacing Options enable I2C. You might need to do sudo reboot here.
+
+Now in the command line type:
+```
+i2cdetect -y  1
+```
+This outputs a table with the list of detected devices on the I2C bus.
+
+### Riquired library
+
+gas-detection library. To install it run this command: 
+```
+pip install gas-detection==1.0.1
+```
+Next type in the terminal:
+```
+python app.py
+```
+
+
+
