@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat application</title>
+</head>
+<body>
+    <div style="width:100%; padding: 20px; overflow-y: scroll;">
+    <div style="padding-top: 20px;">
+        <form onsubmit="return sendMessage()">
+            <input id="message" type="text" style="width: 70%;"><button style="width: 25%">Send</button>
+        </form>
+    </div>
+    <div id="messages"></div>
+    <script>
+    var ws = new WebSocket("ws://192.168.1.158:8888/websocket");
+    var username = "ok";
+ 
+    function sendMessage() {
+        var messageInput = document.getElementById("message");
+        var message = messageInput.value;
+        wsMessage("ACTION_CHAT", {
+            "user": username,
+            "message": message
+        })
+        // Clear the message from the input.
+        messageInput.value = "";
+        return false;
+    }
+
+    function wsMessage(action, data) {
+        // Make the request to the WebSocket.
+        ws.send(JSON.stringify({
+            "client_id": "CLIENT_ID_DASHBOARD",
+            "action": action,
+            "data": data
+        }));
+    }
+
+    ws.onmessage = function(evt) {
+        try {
+            var messageDict = JSON.parse(evt.data);
+        }
+        catch {
+            printMessage("Unknown Error, a message was received but we were unable to read it.");
+        }
+        if (messageDict.action == "ACTION_CHAT")
+            printMessage(messageDict.client_id + ' ' + messageDict.action + ' | ' + messageDict.data.user + ": " + messageDict.data.message)
+        else
+            printMessage(messageDict.client_id + ' ' + messageDict.action)
+    };
+
+    function printMessage(message) {
+        var messageBox = document.createElement("div");
+        messageBox.innerHTML = message;
+        document.getElementById("messages").prepend(messageBox);
+    }
+
+    async function keepConnectionAlive() {
+        while (true) {
+            await new Promise(r => setTimeout(r, 10000));
+            wsMessage("ACTION_ALIVE", {
+                "user": username,
+                "message": "Keeping connection alive."
+            })
+        }
+    }
+
+    keepConnectionAlive();
+
+    </script>
+</body>
+</html>
