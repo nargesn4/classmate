@@ -22,16 +22,16 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         self.simple_init()
         self.waiters.add(self)
-        print("New client connected")
+        print("A client connected, total:", len(self.waiters))
         self.write_message(Message(CLIENT_ID_SERVER, ACTION_CHAT, {"user": CLIENT_ID_SERVER, "message": "Connection established. "}).toJSON())
         # self.loop = tornado.ioloop.PeriodicCallback(self.check_ten_seconds, 10000, io_loop=tornado.ioloop.IOLoop.instance())
         # self.loop.start()
 
     def on_close(self):
-        print("Client disconnected")
         self.waiters.remove(self)
+        print("A client disconnected, total:", len(self.waiters))
         
-        # speaker = Speaker(70, "/home/jessepi/classmate/Resources/Audio/Testing/demo_audio.mp3")
+        # speaker = Speaker(100, "/home/jessepi/classmate/Resources/Audio/Testing/demo_audio.mp3")
         # speaker.play()
         # time.sleep(5)
         # speaker.pause()

@@ -43,7 +43,6 @@ class Client(object):
             
             if msg is None:
                 print("connection closed")
-                print("AOSDIUAOSIDUAOSDIUAOSIDUAOISDUAOISUD")
                 self.ws = None
                 break
             

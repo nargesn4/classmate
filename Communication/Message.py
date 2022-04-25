@@ -4,8 +4,10 @@ from types import SimpleNamespace
 CLIENT_ID_LOGIC = "CLIENT_ID_LOGIC"
 CLIENT_ID_SERVER = "CLIENT_ID_SERVER"
 CLIENT_ID_DASHBOARD = "CLIENT_ID_DASHBOARD"
+CLIENT_ID_ESP_DOOR = "CLIENT_ID_ESP_DOOR"
 ACTION_CHAT = "ACTION_CHAT"
 ACTION_ALIVE = "ACTION_ALIVE"
+# ACTION_SPEAKER = "ACTION_SPEAKER"
 
 class Message(object):
     def __init__(self, client_id, action, data):
@@ -14,6 +16,7 @@ class Message(object):
         self.data = data
         
     def fromJSON(self, jsonString):
+        # print(jsonString,"\n")
         j = json.loads(jsonString)
         self.client_id = j["client_id"]
         self.action = j["action"]

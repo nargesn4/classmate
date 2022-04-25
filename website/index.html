@@ -6,66 +6,105 @@
 <body>
     <div style="width:100%; padding: 20px; overflow-y: scroll;">
     <div style="padding-top: 20px;">
-        <form onsubmit="return sendMessage()">
+        <form id="messageForm">
             <input id="message" type="text" style="width: 70%;"><button style="width: 25%">Send</button>
         </form>
     </div>
     <div id="messages"></div>
     <script>
-    var ws = new WebSocket("ws://192.168.1.158:8888/websocket");
-    var username = "ok";
- 
-    function sendMessage() {
-        var messageInput = document.getElementById("message");
-        var message = messageInput.value;
-        wsMessage("ACTION_CHAT", {
-            "user": username,
-            "message": message
-        })
-        // Clear the message from the input.
-        messageInput.value = "";
-        return false;
-    }
 
-    function wsMessage(action, data) {
-        // Make the request to the WebSocket.
-        ws.send(JSON.stringify({
-            "client_id": "CLIENT_ID_DASHBOARD",
-            "action": action,
-            "data": data
-        }));
-    }
+    function connect() {
+        var username = "Dashboard";
+        var ws = new WebSocket("ws://" + window.location.host + "/websocket");
 
-    ws.onmessage = function(evt) {
-        try {
-            var messageDict = JSON.parse(evt.data);
-        }
-        catch {
-            printMessage("Unknown Error, a message was received but we were unable to read it.");
-        }
-        if (messageDict.action == "ACTION_CHAT")
-            printMessage(messageDict.client_id + ' ' + messageDict.action + ' | ' + messageDict.data.user + ": " + messageDict.data.message)
-        else
-            printMessage(messageDict.client_id + ' ' + messageDict.action)
-    };
+        /*ws.onopen = function() {
+            // subscribe to some channels
+            ws.send(JSON.stringify({
+                //.... some message the I must send when I connect ....
+            }));
+        };*/
+        
+        ws.onmessage = function(e) {
+            try {
+                var messageDict = JSON.parse(e.data);
+                if (messageDict.action == "ACTION_CHAT")
+                    printMessage(messageDict.client_id + ' ' + messageDict.action + ' | ' + messageDict.data.user + ": " + messageDict.data.message)
+                //else
+                //    printMessage(messageDict.client_id + ' ' + messageDict.action)
+            }
+            catch {
+                printMessage("Unknown Error, a message was received but we were unable to read it.");
+            }
+        };
+      
+        ws.onclose = function(e) {
+            console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+            setTimeout(function() {
+                connect();
+            }, 1000);
+        };
+      
+        ws.onerror = function(err) {
+            console.error('Socket encountered error: ', err.message, 'Closing socket');
+            ws.close();
+        };
 
-    function printMessage(message) {
-        var messageBox = document.createElement("div");
-        messageBox.innerHTML = message;
-        document.getElementById("messages").prepend(messageBox);
-    }
+        var form = document.getElementById("messageForm");
+        if(form.addEventListener)
+        form.addEventListener("submit", function(e){
+                e.preventDefault();    //stop form from submitting
+                sendMessage()
+            }, false)
 
-    async function keepConnectionAlive() {
-        while (true) {
-            await new Promise(r => setTimeout(r, 10000));
-            wsMessage("ACTION_ALIVE", {
+        function sendMessage() {
+            var messageInput = document.getElementById("message");
+            console.log(messageInput);
+            var message = messageInput.value;
+            console.log(message);
+            wsMessage("ACTION_CHAT", {
                 "user": username,
-                "message": "Keeping connection alive."
+                "message": message
             })
+            // Clear the message from the input.
+            messageInput.value = "";
+            return false;
         }
-    }
 
-    keepConnectionAlive();
+        function wsMessage(action, data) {
+            // Make the request to the WebSocket.
+            ws.send(JSON.stringify({
+                "client_id": "CLIENT_ID_DASHBOARD",
+                "action": action,
+                "data": data
+            }));
+        }
+
+        function printMessage(message) {
+            var messageBox = document.createElement("div");
+            messageBox.innerHTML = message;
+            document.getElementById("messages").prepend(messageBox);
+        }
+
+        async function keepConnectionAlive() {
+            while (true) {
+                await new Promise(r => setTimeout(r, 10000));
+                wsMessage("ACTION_ALIVE", {
+                    "user": username,
+                    "message": "Keeping connection alive."
+                })
+            }
+        }
+        
+        keepConnectionAlive();
+    }
+      
+    connect();
+ 
+
+
+
+
+
 
     </script>
 </body>
