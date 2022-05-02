@@ -15,7 +15,7 @@ void setupTemperature() {
   dht.begin();
 }
 
-void loopTemperature() {
+void readTempAndHumidity() {
   // Delay between measurements.
   delay(delayMS);
   // Get temperature event and print its value.

@@ -2,5 +2,5 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-void loopTemperature();
+void readTempAndHumidity();
 void setupTemperature();
