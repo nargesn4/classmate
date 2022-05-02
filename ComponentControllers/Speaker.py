@@ -55,18 +55,25 @@ and/or
 class Speaker:
     # integer VOLUME        (in domain of [0,100])
     # string FILE_PATH
-    def __init__(self, VOLUME, FILE_PATH):
+    def __init__(self, volume, file_path):
+        self.v = volume
         instance = vlc.Instance('--aout=alsa')
         self.p = instance.media_player_new()
-        self.m = instance.media_new(FILE_PATH) 
+        self.m = instance.media_new(file_path) 
         self.p.set_media(self.m)
-        vlc.libvlc_audio_set_volume(self.p, VOLUME)
+        vlc.libvlc_audio_set_volume(self.p, volume)
     
     def play(self):
         self.p.play()
     
     def pause(self):
         self.p.pause()
+        
+    def playForTime(self, duration):
+        self.p.play()
+        time.sleep(duration)
+        self.p.pause()
+        
    
 # example code
 #doNotDisturbActivated = Speaker(60, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
