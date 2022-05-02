@@ -100,6 +100,14 @@ https://micropython.org/download/esp32/
 python3 esptool.py --chip esp32 --port /dev/ttyUSB* --baud 460800 write_flash -z 0x1000 ** drop the firmware file in here **
 ```
 
+## Sound
+Connect the sound sensor pins as following (from left to right):
+```
+analog  -> pin 17
+GND     -> GND
+VCC     -> 5V
+```
+
 ## Gas sensor
 ### wiring
 
@@ -136,6 +144,4 @@ You should see something like this:
 ```
 0.02436100935984771
 ```
-
-
 
