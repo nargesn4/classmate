@@ -57,30 +57,22 @@ GND(0v) on RPi and GND on mh-z19
 TxD and RxD are connected to cross between RPi and mh-z18
 ```
 
-For necessary settings including serial port enabling run:
+For enabling serial port run:
 ```
-sudo apt-get install python3-pip git-core
-sudo pip3 install mh_z19 pondslider incremental_counter error_counter
-git clone https://github.com/UedaTakeyuki/handlers
-ln -s handlers/value/sender/send2monitor/send2monitor.py
 sudo sed -i "s/^enable_uart=.*/enable_uart=1/" /boot/config.txt
-read -p "Would you like to reboot now?  (y/n) :" YN
-if [ "${YN}" = "y" ]; then
-  sudo reboot
-else
-  exit 1;
-fi
 ```
-
 Install sensor:
 ```
 sudo pip3 install mh_z19
 ```
 To use mh-z19, once you need to set up enabling serial port device on the Raspberry Pi. Follow this [Wiki]( https://github.com/UedaTakeyuki/mh-z19/wiki/How-to-Enable-Serial-Port-hardware-on-the-Raspberry-Pi) page to do that.
 
-## read CO2 Sensor value
+### read CO2 Sensor value
 ```
-pi@raspberrypi:~ $ sudo python -m mh_z19 
+python Co2Sensor.py
+```
+You should see something like this: 
+```
 {'co2': 668}
 ```
 
@@ -107,6 +99,7 @@ https://micropython.org/download/esp32/
 # Upload firmware to board
 python3 esptool.py --chip esp32 --port /dev/ttyUSB* --baud 460800 write_flash -z 0x1000 ** drop the firmware file in here **
 ```
+
 ## Sound
 Connect the sound sensor pins as following (from left to right):
 ```
@@ -114,3 +107,41 @@ analog  -> pin 17
 GND     -> GND
 VCC     -> 5V
 ```
+
+## Gas sensor
+### wiring
+
+from GPIO2 goes to LV1 and then from HV1 continues to SDA of ADS1115.
+
+Yellow wire from GPIO3 goes to LV2 and then from HV2 continues to SCL of ADS1115.
+
+MQ2's A0 (analog) pin is connected to A0 on ADS1115.
+
+Enable the I2C interface on our RPi, which is disabled by default. To enable I2C type:
+
+```
+sudo raspi-config
+```
+Under Interfacing Options enable I2C. You might need to do sudo reboot here.
+
+Now in the command line type:
+```
+i2cdetect -y  1
+```
+This outputs a table with the list of detected devices on the I2C bus.
+
+### Riquired library
+
+gas-detection library. To install it run this command: 
+```
+pip install gas-detection==1.0.1
+```
+Next type in the terminal:
+```
+python app.py
+```
+You should see something like this: 
+```
+0.02436100935984771
+```
+
