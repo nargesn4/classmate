@@ -8,6 +8,12 @@ from ComponentControllers.Speaker import Speaker
 from ComponentControllers.RgbLed import RgbLed
 from Communication.Message import *
 
+from tinydb import TinyDB, Query
+from settings import APPLICATION_ROOT_DIRECTORY
+logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'logs.json')
+
+THIS_CLIENT_ID = CLIENT_ID_SERVER
+
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("website/index.html")
@@ -23,23 +29,32 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.simple_init()
         self.waiters.add(self)
         print("A client connected, total:", len(self.waiters))
-        self.write_message(Message(CLIENT_ID_SERVER, ACTION_CHAT, {"user": CLIENT_ID_SERVER, "message": "Connection established. "}).toJSON())
+        self.write_message(Message(THIS_CLIENT_ID, ACTION_CHAT, {"user": THIS_CLIENT_ID, "message": "Connection established. "}).toJSON())
         # self.loop = tornado.ioloop.PeriodicCallback(self.check_ten_seconds, 10000, io_loop=tornado.ioloop.IOLoop.instance())
         # self.loop.start()
 
     def on_close(self):
         self.waiters.remove(self)
         print("A client disconnected, total:", len(self.waiters))
-        
-        # speaker = Speaker(100, "/home/jessepi/classmate/Resources/Audio/Testing/demo_audio.mp3")
-        # speaker.play()
-        # time.sleep(5)
-        # speaker.pause()
-        
         # self.loop.stop()
 
     def on_message(self, message):
-        msg = Message(None,None,None).fromJSON(message)
+        try:
+            msgDictionary = json.loads(message)
+            msg = Message(None,None,None).fromDictionary(msgDictionary)
+        except:
+            print("Message received, parsing went wrong")
+            return
+        
+        logDatabase.insert(msgDictionary)
+        logDatabaseLength = len(logDatabase.all())
+        print (logDatabaseLength)
+        if (logDatabaseLength % 10 == 0):
+            self.send_updates(Message(THIS_CLIENT_ID, ACTION_RICKROLL, "50 more loggings were made").toJSON())
+        
+        # if(msg.action == "ACTION_TEMPERATURE_MEASURED"):
+            # save temperature to database
+        
         # self.write_message(msg.toJSON())
         self.send_updates(msg.toJSON())
         self.last = time.time()
@@ -47,13 +62,11 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     @classmethod
     def send_updates(cls, chat):
         # print("Sending message", chat, "to", len(cls.waiters), "waiters")
-        # logging.info("sending message to %d waiters", len(cls.waiters))
         for waiter in cls.waiters:
             try:
                 waiter.write_message(chat)
             except:
                 print("Error sending message.")
-                # logging.error("Error sending message", exc_info=True)
 
     def check_origin(self, origin):
         return True
@@ -61,7 +74,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     # def check_ten_seconds(self):
     #     print("Just checking")
     #     if (time.time() - self.last > 10):
-    #         self.write_message(Message(CLIENT_ID_SERVER, ACTION_CHAT, {"user": CLIENT_ID_SERVER, "message": "You sleeping mate?"}).toJSON())
+    #         self.write_message(Message(THIS_CLIENT_ID, ACTION_CHAT, {"user": THIS_CLIENT_ID, "message": "You sleeping mate?"}).toJSON())
     #         self.last = time.time()
  
 application = tornado.web.Application([

@@ -5,8 +5,13 @@ CLIENT_ID_LOGIC = "CLIENT_ID_LOGIC"
 CLIENT_ID_SERVER = "CLIENT_ID_SERVER"
 CLIENT_ID_DASHBOARD = "CLIENT_ID_DASHBOARD"
 CLIENT_ID_ESP_DOOR = "CLIENT_ID_ESP_DOOR"
-ACTION_CHAT = "ACTION_CHAT"
+CLIENT_ID_ESP_TEMPERATURE_HUMIDITY = "CLIENT_ID_ESP_TEMPERATURE_HUMIDITY"
+
 ACTION_ALIVE = "ACTION_ALIVE"
+ACTION_CHAT = "ACTION_CHAT"
+ACTION_RICKROLL = "ACTION_RICKROLL"
+ACTION_CLOSE_DOOR = "ACTION_CLOSE_DOOR"
+ACTION_OPEN_DOOR = "ACTION_OPEN_DOOR"
 # ACTION_SPEAKER = "ACTION_SPEAKER"
 
 class Message(object):
@@ -17,10 +22,13 @@ class Message(object):
         
     def fromJSON(self, jsonString):
         # print(jsonString,"\n")
-        j = json.loads(jsonString)
-        self.client_id = j["client_id"]
-        self.action = j["action"]
-        self.data = j["data"]
+        dictionary = json.loads(jsonString)
+        return self.fromDictionary(dictionary)
+    
+    def fromDictionary(self, dictionary):
+        self.client_id = dictionary["client_id"]
+        self.action = dictionary["action"]
+        self.data = dictionary["data"]
         return self
         
     def toJSON(self):
