@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="/static/classmate_logo.png">
+
+    <!-- Bootstrap -->
+    <link href="/static/bootstrap.css" rel="stylesheet">
+    <script src="/static/bootstrap.js"></script>
+
+    <!-- ChartJS -->
+    <script src="/static/chart.js"></script>
+
+
+    <title>ClassMate Dashboard</title>
+</head>
+<body>
+
+    <div class="container">
+        <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+            <a href="/" class="d-flex align-items-center col-md-3 mb-2 mb-md-0 text-dark text-decoration-none">
+                <img src="/static/classmate_logo.png" class="bi me-2" width="40" height="32" />
+                <span class="fs-4">ClassMate</span>
+            </a>
+    
+            <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+                <li>
+                    <a class="nav-link px-2">
+                        <span id="statusPrefix" class="text-dark">Status:</span>
+                        <span id="status" class="text-danger">Disconnected</span>
+                    </a>
+                </li>
+            </ul>
+        
+            <div class="col-md-3 text-end">
+                <button type="button" class="btn btn-outline-dark me-2" onClick="window.location.reload();">Refresh page</button>
+                <a type="button" class="btn btn-dark" href="https://github.com/nargesn4/classmate" target="_blank">Source code</a>
+            </div>
+        </header>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-8">
+                Plek voor grafieken
+                <div class="row">
+                    <div class="col-6">
+                        <canvas id="2H" width="400" height="400"></canvas>
+                    </div>
+                    <div class="col-6">
+                        <canvas id="24H" width="400" height="400"></canvas>
+                    </div>
+                </div>
+                <script>
+
+const labels = ['0', '1', '2', '3', '4', '5', '6'];
+const data = {
+  labels: labels,
+  datasets: [
+    {
+      label: 'Temperature Inside',
+      data: [20, 21, 21, 24, 25, 23, 22],
+      borderColor: "#F00",
+      backgroundColor: "#F00",
+      cubicInterpolationMode: 'monotone',
+      tension: 0.4
+    },
+    {
+      label: 'Temperature Outside',
+      data: [20, 20, 21, 20, 21, 21, 20],
+      borderColor: "#A00",
+      backgroundColor: "#F55",
+      cubicInterpolationMode: 'monotone',
+      tension: 0.4
+    },
+    {
+      label: 'Door',
+      data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
+      borderColor: "#00F",
+      backgroundColor: "#00F",
+      //stepped: true,
+      yAxisID: 'y2',
+    }
+  ]
+};
+
+                const ctx = document.getElementById('2H').getContext('2d');
+                const myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                      responsive: true,
+                      plugins: {
+                        title: {
+                          display: true,
+                          text: 'Stacked scales',
+                        },
+                      },
+                      scales: {
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          stack: 'demo',
+                          stackWeight: 2,
+                          grid: {
+                            borderColor: "#F00"
+                          }
+                        },
+                        y2: {
+                          type: 'category',
+                          labels: ['OPEN', 'CLOSED'],
+                          offset: true,
+                          position: 'left',
+                          stack: 'demo',
+                          stackWeight: 1,
+                          grid: {
+                            borderColor: "#00F"
+                          }
+                        }
+                      }
+                    },
+                  });
+                </script>
+            </div>
+            <div class="col-lg-4">
+                <div class="">
+                    <h4>Current State</h4>
+                    <ol class="list-group list-group-numbered">
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Temperature inside</div>
+                            The temperature inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_inside">
+                              ?
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Humidity inside</div>
+                            The humidity inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_inside">
+                              ?
+                          </span>
+                        </li>
+                      </ol>
+                </div>
+                <h4 class="mt-5">Console</h4>
+                <div class="py-2">
+                    <form class="row g-3" id="messageForm">
+                        <div class="col-12">
+                            <input type="text" class="form-control" id="message" placeholder="Message: ">
+                        </div>
+                        <div class="col-8">
+                            <input type="text" class="form-control" id="action_type" placeholder="Action: ACTION_CHAT / ACTION_RICKROLL / ...">
+                        </div>
+                        <div class="col-4">
+                            <button type="submit" class="btn btn-primary btn-block w-100">Send</button>
+                        </div>
+                    </form>
+                    <div id="messages" class="mt-3 bg-light" style="min-height: 100px; max-height: 500px; overflow-y: scroll"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    const StatusDisconnected = Symbol("Disconnected")
+    const StatusConnecting = Symbol("Connecting")
+    const StatusReconnecting = Symbol("Reconnecting")
+    const StatusConnected = Symbol("Connected")
+
+    changeStatus(StatusDisconnected);
+
+    function changeStatus(s) {
+        const statusElement = document.getElementById("status");
+        if (s == StatusDisconnected) {
+            statusElement.innerHTML = "Disconnected";
+            statusElement.className = "text-danger";
+        }
+        else if (s == StatusConnecting) {
+            statusElement.innerHTML = "Connecting...";
+            statusElement.className = "text-warning";
+        }
+        else if (s == StatusReconnecting) {
+            statusElement.innerHTML = "Reconnecting...";
+            statusElement.className = "text-warning";
+        }
+        else if (s == StatusConnected) {
+            statusElement.innerHTML = "Connected";
+            statusElement.className = "text-success";
+        }
+        else {
+            statusElement.innerHTML = "Unknown";
+            statusElement.className = "text-secondary";
+        }
+    }
+
+    var username = "Dashboard";
+    var ws;
+
+    function connect() {
+        ws = new WebSocket("ws://" + window.location.host + "/websocket");
+        var keepAlive = true;
+
+        changeStatus(StatusConnecting);
+
+        ws.onopen = function() {
+            changeStatus(StatusConnected);
+            var form = document.getElementById("messageForm");
+            if(form.addEventListener)
+                form.addEventListener("submit", listenerFunction, false)
+        };
+        
+        ws.onmessage = function(e) {
+            changeStatus(StatusConnected);
+            try {
+                var msg = JSON.parse(e.data);
+                if (msg.action == "ACTION_ALIVE")
+                    return;
+                    else if (msg.action == "ACTION_CHAT")
+                        printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data.user + ": " + msg.data.message)
+                    else if (msg.action == "ACTION_STATUS_UPDATE") {
+                        console.log(msg.data);
+                        for(const [key, value] of Object.entries(msg.data)) {
+                            var visualizationHtml = document.getElementById(`visualize_${key}`);
+                            if(visualizationHtml != null)
+                                visualizationHtml.innerHTML = value;
+                            console.log(`${key}: ${value}`);
+                        }
+                    }
+                    else
+                        printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data)
+                //else
+                //    printMessage(messageDict.client_id + ' ' + messageDict.action)
+            }
+            catch (e) {
+                console.log(e);
+                printMessage("Unknown Error, a message was received but we were unable to read it.");
+            }
+        };
+      
+        ws.onclose = function(e) {
+            changeStatus(StatusDisconnected);
+            keepAlive = false;
+            console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+            changeStatus(StatusReconnecting)
+            
+            var form = document.getElementById("messageForm");
+            form.removeEventListener("submit", listenerFunction)
+
+            // This makes the script execute stuff multiple times.
+            setTimeout(() => {
+                connect()
+            }, 5000);
+            delete ws;
+        };
+      
+        ws.onerror = function(err) {
+            changeStatus(StatusDisconnected);
+            console.error('Socket encountered error: ', 'Closing socket');
+            ws.close();
+        };
+
+        //keepConnectionAlive();
+    }
+
+    function listenerFunction(e) {
+        e.preventDefault();    //stop form from submitting
+        sendMessage()
+    }
+
+    function sendMessage() {    
+        var actionTypeInput = document.getElementById("action_type");
+        var messageInput = document.getElementById("message");
+        var actionType = actionTypeInput.value;
+        var message = messageInput.value;
+        if(actionType == "ACTION_CHAT")
+            wsMessage("ACTION_CHAT", {
+                "user": username,
+                "message": message
+            })
+        else
+            wsMessage(actionType, message)
+            
+        // Clear the message from the input.
+        actionTypeInput.value = "ACTION_CHAT";
+        messageInput.value = "";
+        return false;
+    }
+
+    function wsMessage(action, data) {
+        // Make the request to the WebSocket.
+        ws.send(JSON.stringify({
+            "client_id": "CLIENT_ID_DASHBOARD",
+            "action": action,
+            "data": data
+        }));
+    }
+
+    function printMessage(message) {
+        var messageBox = document.createElement("div");
+        messageBox.innerHTML = message;
+        document.getElementById("messages").prepend(messageBox);
+    }
+
+    async function keepConnectionAlive() {
+        while (true) {
+            await new Promise(r => setTimeout(r, 10000));
+            wsMessage("ACTION_ALIVE", {
+                "user": username,
+                "message": "Keeping connection alive."
+            })
+        }
+    }
+      
+    connect();
+        
+    keepConnectionAlive();
+ 
+    </script>
+</body>
+</html>

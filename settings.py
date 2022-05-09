@@ -1,0 +1,1 @@
+APPLICATION_ROOT_DIRECTORY = "/home/jessepi/classmate/"
