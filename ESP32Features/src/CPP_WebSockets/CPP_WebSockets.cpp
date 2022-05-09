@@ -23,9 +23,9 @@
 #include <ArduinoJson.h>
 using namespace websockets;
 
-const char* ssid = "LAPTOP-JESSE"; //Enter SSID
-const char* password = "D1SL4PT0P"; //Enter Password
-const char* websockets_server_host = "192.168.137.134"; //Enter server adress
+const char* ssid = ""; //Enter SSID
+const char* password = ""; //Enter Password
+const char* websockets_server_host = ""; //Enter server adress
 const uint16_t websockets_server_port = 8888; // Enter server port
 
 unsigned long keepAlivePrevMillis = 0;
