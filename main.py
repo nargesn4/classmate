@@ -10,7 +10,9 @@ from tornado.websocket import websocket_connect
 from Communication.Message import *
 from ComponentControllers.Speaker import Speaker
 
+from tinydb import TinyDB, Query
 from settings import APPLICATION_ROOT_DIRECTORY
+systemDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Databases/system.json')
 
 
 THIS_CLIENT_ID = CLIENT_ID_LOGIC
@@ -21,7 +23,6 @@ def run_background(func, callback, args=(), kwds={}):
     def _callback(result):
         IOLoop.instance().add_callback(lambda: callback(result))
     _workers.apply_async(func, args, kwds, _callback)
-    
 
 def play_audio(volume, file_path, duration = 5):
     speaker = Speaker(volume, file_path)
@@ -32,13 +33,13 @@ def play_audio(volume, file_path, duration = 5):
 class Client(object):
     
     def __init__(self, url, timeout):
-        self.speaker = Speaker(50, APPLICATION_ROOT_DIRECTORY + "Resources/Audio/Testing/demo_audio.mp3")
         self.url = url
         self.timeout = timeout
         self.ioloop = IOLoop.instance()
         self.ws = None
         self.connect()
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
+        PeriodicCallback(self.status_update, 10000, io_loop=self.ioloop).start()
         self.ioloop.start()
 
     @gen.coroutine
@@ -73,8 +74,13 @@ class Client(object):
             #     continue
             if (msg.action == ACTION_CHAT):
                 print(msg.client_id, msg.action, '|', msg.data["user"], ": ", msg.data["message"])
-            # elif (msg.action == ACTION_RICKROLL):
-            #     run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))          
+            # else if (msg.action == ACTION_MEASURED_TEMPERATURE_INSIDE):
+            elif (msg.action == CALLBACK_DOOR_OPENED): # If the door was opened after it's been requested to do so:
+                systemDatabase.update({"door_open": True}, Query().a.exists())
+                
+                
+            elif (msg.action == ACTION_RICKROLL):
+                run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))          
             #elif (msg.action == ACTION_CLOSE_DOOR): 
                 # run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/do_not_disturb_activated.mp3", 5))
             #elif (msg.action == ACTION_OPEN_DOOR): 
@@ -92,6 +98,20 @@ class Client(object):
         else:
             msg = "Keeping connection alive."
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_ALIVE, {"user": CLIENT_ID_LOGIC, "message": msg}).toJSON())
+            
+    def status_update(self):
+        data = {
+                "temperature_inside": 24,
+                "humidity_inside": 70,
+                "temperature_outside": 19,
+                "humidity_outside": 40,
+                "co2": 32,
+                "noisy_outside": True,
+                "door_opened": True
+            }
+        # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
+        # should include time
+        self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, data).toJSON())
 
 if __name__ == "__main__":
     client = Client("ws://localhost:8888/websocket", 5)

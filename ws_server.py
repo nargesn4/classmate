@@ -10,7 +10,7 @@ from Communication.Message import *
 
 from tinydb import TinyDB, Query
 from settings import APPLICATION_ROOT_DIRECTORY
-logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'logs.json')
+logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Databases/logs.json')
 
 THIS_CLIENT_ID = CLIENT_ID_SERVER
 
@@ -48,9 +48,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         
         logDatabase.insert(msgDictionary)
         logDatabaseLength = len(logDatabase.all())
-        print (logDatabaseLength)
-        if (logDatabaseLength % 10 == 0):
-            self.send_updates(Message(THIS_CLIENT_ID, ACTION_RICKROLL, "50 more loggings were made").toJSON())
+        # print (logDatabaseLength)
+        # if (logDatabaseLength % 10 == 0):
+        #     self.send_updates(Message(THIS_CLIENT_ID, ACTION_RICKROLL, "50 more loggings were made").toJSON())
         
         # if(msg.action == "ACTION_TEMPERATURE_MEASURED"):
             # save temperature to database
@@ -79,7 +79,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
  
 application = tornado.web.Application([
     (r'/', IndexHandler),
-    (r'/static/(.*)', tornado.web.StaticFileHandler),
+    (r'/static/(.*)', tornado.web.StaticFileHandler, {"path":r"website/"}),
     (r'/websocket', WSHandler),
 ])
             
