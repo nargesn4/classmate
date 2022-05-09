@@ -17,9 +17,7 @@
 	Created 15/02/2019
 	By Gil Maimon
 	https://github.com/gilmaimon/ArduinoWebsockets
-
 */
-
 #include <ArduinoWebsockets.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
@@ -27,7 +25,7 @@ using namespace websockets;
 
 const char* ssid = ""; //Enter SSID
 const char* password = ""; //Enter Password
-const char* websockets_server_host = ""; //Enter WebSocket server adress
+const char* websockets_server_host = ""; //Enter server adress
 const uint16_t websockets_server_port = 8888; // Enter server port
 
 unsigned long keepAlivePrevMillis = 0;
@@ -110,15 +108,12 @@ void connectSocket() {
     sendMessage("Hey y'all, I've joined the system. It's my task to open/close the door and to turn the fan on/off.");
 }
 
-void setup() {
-    Serial.begin(115200);
-
+void setupWebsocket() {
     connectWiFi();
-
     connectSocket();
 }
 
-void loop() {
+void websocketLoop() {
     client.poll();
 
     if (millis() - keepAlivePrevMillis >= keepAliveIntervalMs) {
