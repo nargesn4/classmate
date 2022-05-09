@@ -100,10 +100,7 @@ class Client(object):
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_ALIVE, {"user": CLIENT_ID_LOGIC, "message": msg}).toJSON())
             
     def status_update(self):
-        # if self.ws is None:
-        #     self.connect()
-        # else:
-            self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, {
+        data = {
                 "temperature_inside": 24,
                 "humidity_inside": 70,
                 "temperature_outside": 19,
@@ -111,7 +108,10 @@ class Client(object):
                 "co2": 32,
                 "noisy_outside": True,
                 "door_opened": True
-            }).toJSON())
+            }
+        # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
+        # should include time
+        self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, data).toJSON())
 
 if __name__ == "__main__":
     client = Client("ws://localhost:8888/websocket", 5)

@@ -10,6 +10,9 @@
     <link href="/static/bootstrap.css" rel="stylesheet">
     <script src="/static/bootstrap.js"></script>
 
+    <!-- ChartJS -->
+    <script src="/static/chart.js"></script>
+
 
     <title>ClassMate Dashboard</title>
 </head>
@@ -42,6 +45,84 @@
         <div class="row">
             <div class="col-lg-8">
                 Plek voor grafieken
+                <div class="row">
+                    <div class="col-6">
+                        <canvas id="2H" width="400" height="400"></canvas>
+                    </div>
+                    <div class="col-6">
+                        <canvas id="24H" width="400" height="400"></canvas>
+                    </div>
+                </div>
+                <script>
+
+const labels = ['0', '1', '2', '3', '4', '5', '6'];
+const data = {
+  labels: labels,
+  datasets: [
+    {
+      label: 'Temperature Inside',
+      data: [20, 21, 21, 24, 25, 23, 22],
+      borderColor: "#F00",
+      backgroundColor: "#F00",
+      cubicInterpolationMode: 'monotone',
+      tension: 0.4
+    },
+    {
+      label: 'Temperature Outside',
+      data: [20, 20, 21, 20, 21, 21, 20],
+      borderColor: "#A00",
+      backgroundColor: "#F55",
+      cubicInterpolationMode: 'monotone',
+      tension: 0.4
+    },
+    {
+      label: 'Door',
+      data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
+      borderColor: "#00F",
+      backgroundColor: "#00F",
+      //stepped: true,
+      yAxisID: 'y2',
+    }
+  ]
+};
+
+                const ctx = document.getElementById('2H').getContext('2d');
+                const myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: data,
+                    options: {
+                      responsive: true,
+                      plugins: {
+                        title: {
+                          display: true,
+                          text: 'Stacked scales',
+                        },
+                      },
+                      scales: {
+                        y: {
+                          type: 'linear',
+                          position: 'left',
+                          stack: 'demo',
+                          stackWeight: 2,
+                          grid: {
+                            borderColor: "#F00"
+                          }
+                        },
+                        y2: {
+                          type: 'category',
+                          labels: ['OPEN', 'CLOSED'],
+                          offset: true,
+                          position: 'left',
+                          stack: 'demo',
+                          stackWeight: 1,
+                          grid: {
+                            borderColor: "#00F"
+                          }
+                        }
+                      }
+                    },
+                  });
+                </script>
             </div>
             <div class="col-lg-4">
                 <div class="">
