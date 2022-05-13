@@ -10,7 +10,7 @@ from Communication.Message import *
 
 from tinydb import TinyDB, Query
 from settings import APPLICATION_ROOT_DIRECTORY
-logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Databases/logs.json')
+logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Data/logs.json')
 
 THIS_CLIENT_ID = CLIENT_ID_SERVER
 
@@ -40,6 +40,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         try:
+            print (message)
             msgDictionary = json.loads(message)
             msg = Message(None,None,None).fromDictionary(msgDictionary)
         except:

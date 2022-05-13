@@ -2,5 +2,6 @@
 #include <DHT.h>
 #include <DHT_U.h>
 
-void readTempAndHumidity();
 void setupTemperature();
+int readTemperature();
+int readHumidity();

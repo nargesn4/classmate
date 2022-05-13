@@ -23,16 +23,16 @@
 #include <ArduinoJson.h>
 using namespace websockets;
 
-const char* ssid = ""; //Enter SSID
-const char* password = ""; //Enter Password
-const char* websockets_server_host = ""; //Enter server adress
+const char* ssid = "Eagle"; //Enter SSID
+const char* password = "touwB@@N#"; //Enter Password
+const char* websockets_server_host = "192.168.1.158"; //Enter server adress
 const uint16_t websockets_server_port = 8888; // Enter server port
 
 unsigned long keepAlivePrevMillis = 0;
 const unsigned long keepAliveIntervalMs = 10000;
 
 WebsocketsClient client;
-String client_id = "CLIENT_ID_ESP_DOOR";
+String client_id = "CLIENT_ID_UNKNOWN_ESP";
 
 void sendData(String action = "ACTION_CHAT", String json_data_string = "\"{\"user\": \"Door/Fan\", \"message\": \"None\"}\"") {
     client.send("{\"client_id\": \"" + client_id + "\", \"action\": \"" + action + "\", \"data\": " + json_data_string + "}");
@@ -104,11 +104,11 @@ void connectSocket() {
     client.connect(websockets_server_host, websockets_server_port, "/websocket");
 
     // Send a message
-
     sendMessage("Hey y'all, I've joined the system. It's my task to open/close the door and to turn the fan on/off.");
 }
 
-void setupWebsocket() {
+void setupWebsocket(String _client_id) {
+    client_id = _client_id;
     connectWiFi();
     connectSocket();
 }
