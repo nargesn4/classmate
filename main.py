@@ -11,6 +11,7 @@ from Communication.Message import *
 from ComponentControllers.Speaker import Speaker
 
 from tinydb import TinyDB, Query
+from ComponentControllers.Temperature import readTemperatureInside, readHumidityInside
 from Data.SystemState import SystemState
 from settings import APPLICATION_ROOT_DIRECTORY
 systemDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Data/system.json')
@@ -119,16 +120,18 @@ class Client(object):
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_ALIVE, {"user": CLIENT_ID_LOGIC, "message": msg}).toJSON())
             
     def status_update(self):
+        temperature_inside = readTemperatureInside()
+        if (temperature_inside):
+            self.ss.temperature_inside = temperature_inside
+        humidity_inside = readHumidityInside()
+        if (humidity_inside):
+            self.ss.humidity_inside = humidity_inside
         ssDict = vars(self.ss)
         systemDatabase.insert(ssDict)
         # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
         # should include time
-        print("send1")
-        self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, systemDatabase.all()).toJSON())
-        print("send2")
         self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, ssDict).toJSON())
-        print("send3")
-        self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_UPDATE, systemDatabase.all()).toJSON())
+        self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_HISTORY, systemDatabase.all()).toJSON())
 
 if __name__ == "__main__":
     client = Client("ws://localhost:8888/websocket", 5)

@@ -1,18 +1,17 @@
-from machine import Pin
-from time import sleep
-import dht 
+import adafruit_dht 
  
-led = Pin(2, Pin.OUT)
-sensor = dht.DHT11(Pin(14))
+sensor = adafruit_dht.DHT22(20)
 
-while True:
+def readTemperatureInside():
   try:
-    led.value(not led.value())
-    sleep(2)
-    sensor.measure()
-    t = sensor.temperature()
-    h = sensor.humidity()
-    print('Temperature: %3.1f C' %t)
-    print('Humidity: %3.1f %%' %h)
-  except OSError as e:
-    print('Sensor Reading Failed')
+    return sensor.temperature
+  except Exception as e:
+    print('Inside Temperature Reading Failed')
+    print (e)
+
+def readHumidityInside():
+  try:
+    return sensor.humidity
+  except Exception as e:
+    print('Inside Humidity Reading Failed')
+    print (e)

@@ -37,7 +37,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         self.close()
         self.waiters.discard(self)
         print("A client disconnected, total:", len(self.waiters))
-        self.loop.stop()
+        # self.loop.stop()
 
     def on_message(self, message):
         try:
@@ -68,7 +68,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
     @classmethod
     def send_updates(cls, chat):
         # print("Sending message", chat, "to", len(cls.waiters), "waiters")
-        print ("sending update")
+        # print ("sending update")
         for waiter in cls.waiters:
             try:
                 waiter.write_message(chat)

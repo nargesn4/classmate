@@ -53,76 +53,6 @@
                         <canvas id="24H" width="400" height="400"></canvas>
                     </div>
                 </div>
-                <script>
-
-const labels = ['0', '1', '2', '3', '4', '5', '6'];
-const data = {
-  labels: labels,
-  datasets: [
-    {
-      label: 'Temperature Inside',
-      data: [20, 21, 21, 24, 25, 23, 22],
-      borderColor: "#F00",
-      backgroundColor: "#F00",
-      cubicInterpolationMode: 'monotone',
-      tension: 0.4
-    },
-    {
-      label: 'Temperature Outside',
-      data: [20, 20, 21, 20, 21, 21, 20],
-      borderColor: "#A00",
-      backgroundColor: "#F55",
-      cubicInterpolationMode: 'monotone',
-      tension: 0.4
-    },
-    {
-      label: 'Door',
-      data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
-      borderColor: "#00F",
-      backgroundColor: "#00F",
-      //stepped: true,
-      yAxisID: 'y2',
-    }
-  ]
-};
-
-                const ctx = document.getElementById('2H').getContext('2d');
-                const myChart = new Chart(ctx, {
-                    type: 'line',
-                    data: data,
-                    options: {
-                      responsive: true,
-                      plugins: {
-                        title: {
-                          display: true,
-                          text: 'Stacked scales',
-                        },
-                      },
-                      scales: {
-                        y: {
-                          type: 'linear',
-                          position: 'left',
-                          stack: 'demo',
-                          stackWeight: 2,
-                          grid: {
-                            borderColor: "#F00"
-                          }
-                        },
-                        y2: {
-                          type: 'category',
-                          labels: ['OPEN', 'CLOSED'],
-                          offset: true,
-                          position: 'left',
-                          stack: 'demo',
-                          stackWeight: 1,
-                          grid: {
-                            borderColor: "#00F"
-                          }
-                        }
-                      }
-                    },
-                  });
-                </script>
             </div>
             <div class="col-lg-4">
                 <div class="">
@@ -187,160 +117,277 @@ const data = {
 
 
     <script>
-    const StatusDisconnected = Symbol("Disconnected")
-    const StatusConnecting = Symbol("Connecting")
-    const StatusReconnecting = Symbol("Reconnecting")
-    const StatusConnected = Symbol("Connected")
 
-    changeStatus(StatusDisconnected);
 
-    function changeStatus(s) {
-        const statusElement = document.getElementById("status");
-        if (s == StatusDisconnected) {
-            statusElement.innerHTML = "Disconnected";
-            statusElement.className = "text-danger";
-        }
-        else if (s == StatusConnecting) {
-            statusElement.innerHTML = "Connecting...";
-            statusElement.className = "text-warning";
-        }
-        else if (s == StatusReconnecting) {
-            statusElement.innerHTML = "Reconnecting...";
-            statusElement.className = "text-warning";
-        }
-        else if (s == StatusConnected) {
-            statusElement.innerHTML = "Connected";
-            statusElement.className = "text-success";
-        }
-        else {
-            statusElement.innerHTML = "Unknown";
-            statusElement.className = "text-secondary";
-        }
-    }
-
-    var username = "Dashboard";
-    var ws;
-
-    function connect() {
-        ws = new WebSocket("ws://" + window.location.host + "/websocket");
-        var keepAlive = true;
-
-        changeStatus(StatusConnecting);
-
-        ws.onopen = function() {
-            changeStatus(StatusConnected);
-            var form = document.getElementById("messageForm");
-            if(form.addEventListener)
-                form.addEventListener("submit", listenerFunction, false)
+        var data_size = 7;
+        const labels = ['0', '1', '2', '3', '4', '5', '6'];
+        const data = {
+          labels: labels,
+          datasets: [
+            {
+                label: 'Temperature Inside',
+                data: [20, 21, 21, 24, 25, 23, 22],
+                borderColor: "#F00",
+                backgroundColor: "#F00",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4
+            },
+            {
+              label: 'Temperature Outside',
+              data: [20, 20, 21, 20, 21, 21, 20],
+              borderColor: "#A00",
+              backgroundColor: "#F55",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4
+            },
+            {
+              label: 'Door',
+              data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
+              borderColor: "#00F",
+              backgroundColor: "#00F",
+              //stepped: true,
+              yAxisID: 'y2',
+            }
+          ]
         };
-        
-        ws.onmessage = function(e) {
-            changeStatus(StatusConnected);
-            try {
-                var msg = JSON.parse(e.data);
-                if (msg.action == "ACTION_ALIVE")
-                    return;
-                else if (msg.action == "ACTION_CHAT")
-                    printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data.user + ": " + msg.data.message)
-                else if (msg.action == "ACTION_STATUS_UPDATE") {
-                    // printMessage(msg.client_id + ' ' + msg.action)
-                    console.log(msg.data);
-                    for(const [key, value] of Object.entries(msg.data)) {
-                        var visualizationHtml = document.getElementById(`visualize_${key}`);
-                        if(visualizationHtml != null)
-                            visualizationHtml.innerHTML = value;
-                        // console.log(`${key}: ${value}`);
+
+        const ctx = document.getElementById('2H').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+            responsive: true,
+            plugins: {
+                title: {
+                display: true,
+                text: 'Stacked scales',
+                },
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    stack: 'demo',
+                    stackWeight: 2,
+                    grid: {
+                        borderColor: "#F00"
+                    }
+                },
+                y2: {
+                    type: 'category',
+                    labels: ['OPEN', 'CLOSED'],
+                    offset: true,
+                    position: 'left',
+                    stack: 'demo',
+                    stackWeight: 1,
+                    grid: {
+                        borderColor: "#00F"
                     }
                 }
-                else
-                    printMessage(msg.client_id + ' ' + msg.action)
-                //else
-                //    printMessage(messageDict.client_id + ' ' + messageDict.action)
             }
-            catch (e) {
-                console.log(e);
-                printMessage("Unknown Error, a message was received but we were unable to read it.");
+            },
+        });
+
+
+        const StatusDisconnected = Symbol("Disconnected")
+        const StatusConnecting = Symbol("Connecting")
+        const StatusReconnecting = Symbol("Reconnecting")
+        const StatusConnected = Symbol("Connected")
+
+        changeStatus(StatusDisconnected);
+
+        function changeStatus(s) {
+            const statusElement = document.getElementById("status");
+            if (s == StatusDisconnected) {
+                statusElement.innerHTML = "Disconnected";
+                statusElement.className = "text-danger";
             }
-        };
-      
-        ws.onclose = function(e) {
-            changeStatus(StatusDisconnected);
-            keepAlive = false;
-            console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
-            changeStatus(StatusReconnecting)
-            
-            var form = document.getElementById("messageForm");
-            form.removeEventListener("submit", listenerFunction)
-
-            // This makes the script execute stuff multiple times.
-            setTimeout(() => {
-                connect()
-            }, 5000);
-            delete ws;
-        };
-      
-        ws.onerror = function(err) {
-            changeStatus(StatusDisconnected);
-            console.error('Socket encountered error: ', 'Closing socket');
-            ws.close();
-        };
-
-        //keepConnectionAlive();
-    }
-
-    function listenerFunction(e) {
-        e.preventDefault();    //stop form from submitting
-        sendMessage()
-    }
-
-    function sendMessage() {    
-        var actionTypeInput = document.getElementById("action_type");
-        var messageInput = document.getElementById("message");
-        var actionType = actionTypeInput.value;
-        var message = messageInput.value;
-        if(actionType == "ACTION_CHAT")
-            wsMessage("ACTION_CHAT", {
-                "user": username,
-                "message": message
-            })
-        else
-            wsMessage(actionType, message)
-            
-        // Clear the message from the input.
-        actionTypeInput.value = "ACTION_CHAT";
-        messageInput.value = "";
-        return false;
-    }
-
-    function wsMessage(action, data) {
-        // Make the request to the WebSocket.
-        ws.send(JSON.stringify({
-            "client_id": "CLIENT_ID_DASHBOARD",
-            "action": action,
-            "data": data
-        }));
-    }
-
-    function printMessage(message) {
-        var messageBox = document.createElement("div");
-        messageBox.innerHTML = message;
-        document.getElementById("messages").prepend(messageBox);
-    }
-
-    async function keepConnectionAlive() {
-        while (true) {
-            await new Promise(r => setTimeout(r, 10000));
-            wsMessage("ACTION_ALIVE", {
-                "user": username,
-                "message": "Keeping connection alive."
-            })
+            else if (s == StatusConnecting) {
+                statusElement.innerHTML = "Connecting...";
+                statusElement.className = "text-warning";
+            }
+            else if (s == StatusReconnecting) {
+                statusElement.innerHTML = "Reconnecting...";
+                statusElement.className = "text-warning";
+            }
+            else if (s == StatusConnected) {
+                statusElement.innerHTML = "Connected";
+                statusElement.className = "text-success";
+            }
+            else {
+                statusElement.innerHTML = "Unknown";
+                statusElement.className = "text-secondary";
+            }
         }
-    }
-      
-    connect();
+
+        var username = "Dashboard";
+        var ws;
+
+        function connect() {
+            ws = new WebSocket("ws://" + window.location.host + "/websocket");
+            var keepAlive = true;
+
+            changeStatus(StatusConnecting);
+
+            ws.onopen = function() {
+                changeStatus(StatusConnected);
+                var form = document.getElementById("messageForm");
+                if(form.addEventListener)
+                    form.addEventListener("submit", listenerFunction, false)
+            };
+            
+            ws.onmessage = function(e) {
+                changeStatus(StatusConnected);
+                //try {
+                    var msg = JSON.parse(e.data);
+                    if (msg.action == "ACTION_ALIVE")
+                        return;
+                    else if (msg.action == "ACTION_CHAT")
+                        printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data.user + ": " + msg.data.message)
+                    else if (msg.action == "ACTION_STATUS_UPDATE") {
+                        // printMessage(msg.client_id + ' ' + msg.action)
+                        // console.log(msg.data);
+                        for(const [key, value] of Object.entries(msg.data)) {
+                            var visualizationHtml = document.getElementById(`visualize_${key}`);
+                            if(visualizationHtml != null)
+                                visualizationHtml.innerHTML = value;
+                        }
+                    }
+                    else if (msg.action == "ACTION_STATUS_HISTORY") {
+                        // printMessage(msg.client_id + ' ' + msg.action)
+                        console.log(msg.data)
+                        for(const [index, keyValue] of Object.entries(msg.data)) {
+                            console.log(index);
+                            console.log(keyValue);
+                            atLeastOneRecordAdded = false;
+                            for(const [key, value] of Object.entries(keyValue)) {
+                                kv = keyValueToChartIndexValue(key, value)
+                                if (kv != null) {
+                                    console.log(kv);
+                                    myChart.data.datasets[kv.key].data[index] = kv.value;
+                                    atLeastOneRecordAdded = true;
+                                }
+                            }
+                            if (atLeastOneRecordAdded) {
+                                myChart.data.labels[index] = index;
+                                myChart.update();
+                            }
+                            /**/
+
+                            // console.log(`${key}: ${value}`);
+                        }
+
+                        /*myChart.data.labels[data_size] = data_size;
+                        myChart.data.datasets[0].data[data_size] = 15;
+                        myChart.data.datasets[1].data[data_size] = 15;
+                        myChart.data.datasets[2].data[data_size] = 'CLOSED';
+                        console.log(myChart.data.datasets[0].data);
+                        console.log(myChart.data.datasets[1].data);
+                        console.log(myChart.data.datasets[2].data);
+                        data_size++;
+                        console.log(data_size);
+                        myChart.update();*/
+                    }
+                    else
+                        printMessage(msg.client_id + ' ' + msg.action)
+                    //else
+                    //    printMessage(messageDict.client_id + ' ' + messageDict.action)
+                //}
+                /*catch (e) {
+                    console.log(e);
+                    printMessage("Unknown Error, a message was received but we were unable to read it.");
+                }*/
+            };
         
-    keepConnectionAlive();
- 
+            ws.onclose = function(e) {
+                changeStatus(StatusDisconnected);
+                keepAlive = false;
+                console.log('Socket is closed. Reconnect will be attempted in 5 seconds.', e.reason);
+                changeStatus(StatusReconnecting)
+                
+                var form = document.getElementById("messageForm");
+                form.removeEventListener("submit", listenerFunction)
+
+                // This makes the script execute stuff multiple times.
+                setTimeout(() => {
+                    connect()
+                }, 5000);
+                delete ws;
+            };
+        
+            ws.onerror = function(err) {
+                changeStatus(StatusDisconnected);
+                console.error('Socket encountered error: ', 'Closing socket');
+                ws.close();
+            };
+
+            //keepConnectionAlive();
+        }
+
+        // key: string
+        function keyValueToChartIndexValue(k, v) {
+            if (k == "temperature_inside")
+                return { key: 0, value: v };
+            else if (k == "temperature_outside")
+                return { key: 1, value: v };
+            else if (k == "door_open")
+                return { key: 2, value: v ? "OPEN" : "CLOSED" };
+            else
+                return null;
+        }
+
+        function listenerFunction(e) {
+            e.preventDefault();    //stop form from submitting
+            sendMessage()
+        }
+
+        function sendMessage() {    
+            var actionTypeInput = document.getElementById("action_type");
+            var messageInput = document.getElementById("message");
+            var actionType = actionTypeInput.value;
+            var message = messageInput.value;
+            if(actionType == "ACTION_CHAT")
+                wsMessage("ACTION_CHAT", {
+                    "user": username,
+                    "message": message
+                })
+            else
+                wsMessage(actionType, message)
+                
+            // Clear the message from the input.
+            actionTypeInput.value = "ACTION_CHAT";
+            messageInput.value = "";
+            return false;
+        }
+
+        function wsMessage(action, data) {
+            // Make the request to the WebSocket.
+            ws.send(JSON.stringify({
+                "client_id": "CLIENT_ID_DASHBOARD",
+                "action": action,
+                "data": data
+            }));
+        }
+
+        function printMessage(message) {
+            var messageBox = document.createElement("div");
+            messageBox.innerHTML = message;
+            document.getElementById("messages").prepend(messageBox);
+        }
+
+        async function keepConnectionAlive() {
+            while (true) {
+                await new Promise(r => setTimeout(r, 10000));
+                wsMessage("ACTION_ALIVE", {
+                    "user": username,
+                    "message": "Keeping connection alive."
+                })
+            }
+        }
+        
+        connect();
+            
+        keepConnectionAlive();
     </script>
 </body>
 </html>
