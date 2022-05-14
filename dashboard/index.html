@@ -146,6 +146,24 @@ const data = {
                               ?
                           </span>
                         </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Temperature outside</div>
+                            The temperature outside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_outside">
+                              ?
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Humidity outside</div>
+                            The humidity outside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_outside">
+                              ?
+                          </span>
+                        </li>
                       </ol>
                 </div>
                 <h4 class="mt-5">Console</h4>
@@ -222,19 +240,20 @@ const data = {
                 var msg = JSON.parse(e.data);
                 if (msg.action == "ACTION_ALIVE")
                     return;
-                    else if (msg.action == "ACTION_CHAT")
-                        printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data.user + ": " + msg.data.message)
-                    else if (msg.action == "ACTION_STATUS_UPDATE") {
-                        console.log(msg.data);
-                        for(const [key, value] of Object.entries(msg.data)) {
-                            var visualizationHtml = document.getElementById(`visualize_${key}`);
-                            if(visualizationHtml != null)
-                                visualizationHtml.innerHTML = value;
-                            console.log(`${key}: ${value}`);
-                        }
+                else if (msg.action == "ACTION_CHAT")
+                    printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data.user + ": " + msg.data.message)
+                else if (msg.action == "ACTION_STATUS_UPDATE") {
+                    // printMessage(msg.client_id + ' ' + msg.action)
+                    console.log(msg.data);
+                    for(const [key, value] of Object.entries(msg.data)) {
+                        var visualizationHtml = document.getElementById(`visualize_${key}`);
+                        if(visualizationHtml != null)
+                            visualizationHtml.innerHTML = value;
+                        // console.log(`${key}: ${value}`);
                     }
-                    else
-                        printMessage(msg.client_id + ' ' + msg.action + ' | ' + msg.data)
+                }
+                else
+                    printMessage(msg.client_id + ' ' + msg.action)
                 //else
                 //    printMessage(messageDict.client_id + ' ' + messageDict.action)
             }

@@ -63,7 +63,7 @@ void onMessageCallback(WebsocketsMessage message) {
     if(action == "ACTION_CHAT") {
       Serial.println(action + " | " + doc["data"]["user"].as<String>() + ": " + doc["data"]["message"].as<String>());
       if(doc["client_id"].as<String>() != client_id) {
-          sendMessage("I received something! Pong!");
+        //   sendMessage("I received something! Pong!");
       }
     }
 }
