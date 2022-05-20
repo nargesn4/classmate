@@ -23,16 +23,16 @@
 #include <ArduinoJson.h>
 using namespace websockets;
 
-const char* ssid = ""; //Enter SSID
-const char* password = ""; //Enter Password
-const char* websockets_server_host = ""; //Enter server adress
+const char* ssid = "LAPTOP-JESSE"; //Enter SSID
+const char* password = "D1SL4PT0P"; //Enter Password
+const char* websockets_server_host = "192.168.137.134"; //Enter server adress
 const uint16_t websockets_server_port = 8888; // Enter server port
 
 unsigned long keepAlivePrevMillis = 0;
 const unsigned long keepAliveIntervalMs = 10000;
 
 WebsocketsClient client;
-String client_id = "CLIENT_ID_ESP_DOOR";
+String client_id = "CLIENT_ID_UNKNOWN_ESP";
 
 void sendData(String action = "ACTION_CHAT", String json_data_string = "\"{\"user\": \"Door/Fan\", \"message\": \"None\"}\"") {
     client.send("{\"client_id\": \"" + client_id + "\", \"action\": \"" + action + "\", \"data\": " + json_data_string + "}");
@@ -63,7 +63,7 @@ void onMessageCallback(WebsocketsMessage message) {
     if(action == "ACTION_CHAT") {
       Serial.println(action + " | " + doc["data"]["user"].as<String>() + ": " + doc["data"]["message"].as<String>());
       if(doc["client_id"].as<String>() != client_id) {
-          sendMessage("I received something! Pong!");
+        //   sendMessage("I received something! Pong!");
       }
     }
 }
@@ -104,11 +104,11 @@ void connectSocket() {
     client.connect(websockets_server_host, websockets_server_port, "/websocket");
 
     // Send a message
-
     sendMessage("Hey y'all, I've joined the system. It's my task to open/close the door and to turn the fan on/off.");
 }
 
-void setupWebsocket() {
+void setupWebsocket(String _client_id) {
+    client_id = _client_id;
     connectWiFi();
     connectSocket();
 }

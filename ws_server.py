@@ -10,13 +10,13 @@ from Communication.Message import *
 
 from tinydb import TinyDB, Query
 from settings import APPLICATION_ROOT_DIRECTORY
-logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Databases/logs.json')
+logDatabase = TinyDB(APPLICATION_ROOT_DIRECTORY + 'Data/logs.json')
 
 THIS_CLIENT_ID = CLIENT_ID_SERVER
 
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("website/index.html")
+        self.render("dashboard/index.html")
 
 class WSHandler(tornado.websocket.WebSocketHandler):
     waiters = set()
@@ -34,21 +34,25 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # self.loop.start()
 
     def on_close(self):
-        self.waiters.remove(self)
+        self.close()
+        self.waiters.discard(self)
         print("A client disconnected, total:", len(self.waiters))
         # self.loop.stop()
 
     def on_message(self, message):
         try:
+            # print (message)
             msgDictionary = json.loads(message)
             msg = Message(None,None,None).fromDictionary(msgDictionary)
         except:
             print("Message received, parsing went wrong")
             return
         
-        logDatabase.insert(msgDictionary)
-        logDatabaseLength = len(logDatabase.all())
-        # print (logDatabaseLength)
+        if (msg.action == ACTION_ALIVE):
+            return
+        
+        # print ("goign in")
+        # logDatabase.insert(msgDictionary)
         # if (logDatabaseLength % 10 == 0):
         #     self.send_updates(Message(THIS_CLIENT_ID, ACTION_RICKROLL, "50 more loggings were made").toJSON())
         
@@ -56,12 +60,15 @@ class WSHandler(tornado.websocket.WebSocketHandler):
             # save temperature to database
         
         # self.write_message(msg.toJSON())
+        # print ("okay now what1")
         self.send_updates(msg.toJSON())
         self.last = time.time()
+        # print ("okay now what2\n")
 
     @classmethod
     def send_updates(cls, chat):
         # print("Sending message", chat, "to", len(cls.waiters), "waiters")
+        # print ("sending update")
         for waiter in cls.waiters:
             try:
                 waiter.write_message(chat)
@@ -79,7 +86,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
  
 application = tornado.web.Application([
     (r'/', IndexHandler),
-    (r'/static/(.*)', tornado.web.StaticFileHandler, {"path":r"website/"}),
+    (r'/static/(.*)', tornado.web.StaticFileHandler, {"path":r"dashboard/"}),
     (r'/websocket', WSHandler),
 ])
             
