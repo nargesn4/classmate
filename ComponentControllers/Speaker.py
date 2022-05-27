@@ -74,6 +74,10 @@ class Speaker:
         time.sleep(duration)
         self.p.pause()
         
+# s = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+# s.play()
+# time.sleep(50)
+# s.pause()
    
 # example code
 #doNotDisturbActivated = Speaker(60, "Resources/Audio/Testing/do_not_disturb_activated.mp3")

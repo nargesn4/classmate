@@ -94,6 +94,15 @@
                               ?
                           </span>
                         </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">CO2</div>
+                            The CO2 levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill" id="visualize_co2">
+                              ?
+                          </span>
+                        </li>
                       </ol>
                 </div>
                 <h4 class="mt-5">Console</h4>
@@ -109,7 +118,7 @@
                             <button type="submit" class="btn btn-primary btn-block w-100">Send</button>
                         </div>
                     </form>
-                    <div id="messages" class="mt-3 bg-light" style="min-height: 100px; max-height: 500px; overflow-y: scroll"></div>
+                    <div id="messages" class="mt-3 bg-light" style="min-height: 100px; max-height: 500px; overflow-y: scroll; font-size: 9px;"></div>
                 </div>
             </div>
         </div>
@@ -141,12 +150,21 @@
               tension: 0.4
             },
             {
+                label: 'CO2 (ppm)',
+                data: [20, 21, 21, 24, 25, 23, 22],
+                borderColor: "#0F0",
+                backgroundColor: "#0A0",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y2'
+            },
+            {
               label: 'Door',
               data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
               borderColor: "#00F",
               backgroundColor: "#00F",
               //stepped: true,
-              yAxisID: 'y2',
+              yAxisID: 'y3'
             }
           ]
         };
@@ -156,35 +174,44 @@
             type: 'line',
             data: data,
             options: {
-            responsive: true,
-            plugins: {
-                title: {
-                display: true,
-                text: 'Stacked scales',
+                responsive: true,
+                plugins: {
+                    title: {
+                    display: true,
+                    text: 'Stacked scales',
+                    },
                 },
-            },
-            scales: {
-                y: {
-                    type: 'linear',
-                    position: 'left',
-                    stack: 'demo',
-                    stackWeight: 2,
-                    grid: {
-                        borderColor: "#F00"
-                    }
-                },
-                y2: {
-                    type: 'category',
-                    labels: ['OPEN', 'CLOSED'],
-                    offset: true,
-                    position: 'left',
-                    stack: 'demo',
-                    stackWeight: 1,
-                    grid: {
-                        borderColor: "#00F"
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#F00"
+                        }
+                    },
+                    y2: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#0F0"
+                        }
+                    },
+                    y3: {
+                        type: 'category',
+                        labels: ['OPEN', 'CLOSED'],
+                        offset: true,
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 1,
+                        grid: {
+                            borderColor: "#00F"
+                        }
                     }
                 }
-            }
             },
         });
 
@@ -254,27 +281,29 @@
                         }
                     }
                     else if (msg.action == "ACTION_STATUS_HISTORY") {
-                        // printMessage(msg.client_id + ' ' + msg.action)
-                        console.log(msg.data)
+                        if (msg.data.length < myChart.data.labels.length) {
+                            myChart.data.labels = [];
+                            for(const [index, value] of Object.entries(myChart.data.datasets)) {
+                                console.log(index);
+                                myChart.data.datasets[index].data = [];
+                            }
+                        }
+                        console.log(msg.data.length);
+                        shouldChartUpdate = atLeastOneRecordAdded = false;
                         for(const [index, keyValue] of Object.entries(msg.data)) {
-                            console.log(index);
-                            console.log(keyValue);
-                            atLeastOneRecordAdded = false;
                             for(const [key, value] of Object.entries(keyValue)) {
                                 kv = keyValueToChartIndexValue(key, value)
                                 if (kv != null) {
-                                    console.log(kv);
                                     myChart.data.datasets[kv.key].data[index] = kv.value;
-                                    atLeastOneRecordAdded = true;
+                                    shouldChartUpdate = atLeastOneRecordAdded = true;
                                 }
                             }
-                            if (atLeastOneRecordAdded) {
+                            if (shouldChartUpdate) {
                                 myChart.data.labels[index] = index;
-                                myChart.update();
                             }
-                            /**/
-
-                            // console.log(`${key}: ${value}`);
+                        }
+                        if (shouldChartUpdate) {
+                            myChart.update();
                         }
 
                         /*myChart.data.labels[data_size] = data_size;
@@ -288,7 +317,7 @@
                         console.log(data_size);
                         myChart.update();*/
                     }
-                    else
+                    else if (!msg.client_id == "CLIENT_ID_ESP_TEMPERATURE_HUMIDITY")
                         printMessage(msg.client_id + ' ' + msg.action)
                     //else
                     //    printMessage(messageDict.client_id + ' ' + messageDict.action)
@@ -330,8 +359,10 @@
                 return { key: 0, value: v };
             else if (k == "temperature_outside")
                 return { key: 1, value: v };
+            else if (k == "co2")
+                return { key: 2, value: v };
             else if (k == "door_open")
-                return { key: 2, value: v ? "OPEN" : "CLOSED" };
+                return { key: 3, value: v ? "OPEN" : "CLOSED" };
             else
                 return null;
         }
