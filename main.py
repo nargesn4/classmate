@@ -22,6 +22,9 @@ from ComponentControllers.Temperature import readTemperatureInside, readHumidity
 # co2
 import mh_z19
 
+# gas (smoke)
+from gas_detection import GasDetection
+
 # screen
 from PIL import Image
 from PIL import ImageDraw
@@ -39,20 +42,6 @@ DC = 18
 RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
-
-def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
-    # Get rendered font width and height.
-    draw = ImageDraw.Draw(image)
-    width, height = draw.textsize(text, font=font)
-    # Create a new image with transparent background to store the text.
-    textimage = Image.new('RGBA', (width, height), (0,0,0,0))
-    # Render the text.
-    textdraw = ImageDraw.Draw(textimage)
-    textdraw.text((0,0), text, font=font, fill=fill)
-    # Rotate the text image.
-    rotated = textimage.rotate(angle, expand=1)
-    # Paste the text into the image, using it as a mask for transparency.
-    image.paste(rotated, position, rotated)
 
 _workers = ThreadPool(10)
 
@@ -79,8 +68,13 @@ class Client(object):
         self.timeout = timeout
         self.ioloop = IOLoop.instance()
         self.ws = None
+        print ("Setting up Gas Detection...")
+        self.gas_detection = GasDetection()
+        print ("Setting up TFT screen...")
         self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
         self.display.begin()
+        self.status_screen()
+        print ("Connecting to WebSocket Server...")
         self.connect()
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
         PeriodicCallback(self.status_update, 10000, io_loop=self.ioloop).start()
@@ -166,7 +160,21 @@ class Client(object):
         co2 = mh_z19.read_co2valueonly()
         if (co2):
             self.ss.co2 = co2
-            self.status_screen(str(co2))
+            # self.status_screen(str(co2))
+        ppm = self.gas_detection.percentage()
+        if (ppm):
+            self.ss.co = ppm[self.gas_detection.CO_GAS] * 1000
+            self.ss.smoke = ppm[self.gas_detection.SMOKE_GAS] * 1000
+            print (self.ss)
+            # print('CO: {} ppm'.format(ppm[self.gas_detection.CO_GAS]))
+            # print('H2: {} ppm'.format(ppm[self.gas_detection.H2_GAS]))
+            # print('CH4: {} ppm'.format(ppm[self.gas_detection.CH4_GAS]))
+            # print('LPG: {} ppm'.format(ppm[self.gas_detection.LPG_GAS]))
+            # print('PROPANE: {} ppm'.format(ppm[self.gas_detection.PROPANE_GAS]))
+            # print('ALCOHOL: {} ppm'.format(ppm[self.gas_detection.ALCOHOL_GAS]))
+            # print('SMOKE: {} ppm\n'.format(ppm[self.gas_detection.SMOKE_GAS]))
+        
+        self.status_screen()
         
         ssDict = vars(self.ss)
         systemDatabase.insert(ssDict)
@@ -180,25 +188,73 @@ class Client(object):
         except Exception as e:
             print ("Sending status update went wrong.")
             
-    def status_screen(self, systemState):
+    def status_screen(self):
         self.display.clear((255,255,255))
 
         draw = self.display.draw()
 
-        # Draw a purple rectangle with yellow outline.
-        draw.rectangle((10, 155, 110, 10), outline=(255,255,0), fill=(50,205,50))
-
         # Draw a green rectangle with black outline.
-        draw.rectangle((10, 310, 110, 165), outline=(0,0,0), fill=(50,205,50))
+        draw.rectangle((0, 320, 240, 90), outline=(0,0,0), fill=(50,205,50))
+
+        # Draw a purple rectangle with yellow outline.
+        # draw.rectangle((10, 155, 110, 10), outline=(255,255,0), fill=(50,205,50))
 
         # Load default font.
-        font = ImageFont.load_default()
+        titleFont = ImageFont.truetype("arial.ttf", 40)
+        subTitleFont = ImageFont.truetype("arial.ttf", 16)
+        text = ImageFont.truetype("arial.ttf", 12)
         
-        draw_rotated_text(self.display.buffer, 'CO2 value!', (150, 40), 90, font, fill=(0,0,0))
-        draw_rotated_text(self.display.buffer, 'This is a line of text.', (170, 10), 90, font, fill=(0,0,0))
-        draw_rotated_text(self.display.buffer, 'smoke value: ', (150, 200), 90, font, fill=(0,0,0))
-        draw_rotated_text(self.display.buffer, value , (170, 230), 90, font, fill=(0,0,0))
+        index = "Temperature Inside\n"
+        index += "Temperature Outside\n"
+        index += "Humidity Inside\n"
+        index += "Humidity Outside\n"
+        index += "CO2 Concentration\n"
+        index += "CO Concentration\n"
+        index += "Smoke Concentration\n"
+        index += "Door\n"
+        index += "Mode\n"
+        index += "Noisy outside?\n"
+        index += "Class used in 15 min?\n"
+        index += "Favorable conditions?"
+        
+        values = str(self.ss.temperature_inside) + "°C\n"
+        values += str(self.ss.temperature_outside) + "°C\n"
+        values += str(self.ss.humidity_inside) + "%\n"
+        values += str(self.ss.humidity_outside) + "%\n"
+        values += str(self.ss.co2) + " ppm\n"
+        values += str("{:.4f} ppm".format(self.ss.co / 1000)) + "\n"
+        values += str("{:.4f} ppm".format(self.ss.smoke / 1000)) + "\n"
+        if (self.ss.door_open == None):
+            values += "Unknown\n"
+        else:
+            values += str(("Closed","Open")[self.ss.door_open]) + "\n"
+        values += str(("None","Do not disturb")[self.ss.do_not_disturb]) + "\n"
+        values += str(("No","Yes")[self.ss.noisy_outside]) + "\n"
+        values += str(("No","Yes")[self.ss.busy_in_15_minutes]) + "\n"
+        values += str(("No","Yes")[self.ss.favorable_conditions])
+        
+        # draw_rotated_text(self.display.buffer, 'smoke value: ', (150, 200), 90, text, fill=(0,0,0))
+        # draw_rotated_text(self.display.buffer, "{:.4f} ppm".format(self.ss.smoke / 1000), (170, 230), 90, text, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, "ClassMate", (24, 22), 0, titleFont, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, "Classroom State", (200, 100), 270, subTitleFont, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, index, (10, 100), 270, text, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, values, (10, 250), 270, text, fill=(0,0,0))
+        # draw_rotated_text(self.display.buffer, f"{self.ss.co2} ppm", (170, 10), 90, font, fill=(0,0,0))
         self.display.display()
+
+def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
+    # Get rendered font width and height.
+    draw = ImageDraw.Draw(image)
+    width, height = draw.textsize(text, font=font)
+    # Create a new image with transparent background to store the text.
+    textimage = Image.new('RGBA', (width, height), (0,0,0,0))
+    # Render the text.
+    textdraw = ImageDraw.Draw(textimage)
+    textdraw.text((0,0), text, font=font, fill=fill)
+    # Rotate the text image.
+    rotated = textimage.rotate(angle, expand=1)
+    # Paste the text into the image, using it as a mask for transparency.
+    image.paste(rotated, position, rotated)
 
 if __name__ == "__main__":    
     client = Client("ws://localhost:8888/websocket", 5)

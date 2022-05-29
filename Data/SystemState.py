@@ -10,8 +10,10 @@ class SystemState:
     temperature_outside: int = 20
     humidity_outside: int = 50
     co2: int = 700
+    co: int = 0
+    smoke: int = 0
     noisy_outside: bool = False
-    door_open: bool = False
+    door_open: bool = None
     do_not_disturb: bool = False
     busy_in_15_minutes: bool = False
     favorable_conditions: bool = True

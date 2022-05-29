@@ -31,6 +31,6 @@ void loop() {
 	// }
 	
 	// doorIsOpen = !doorIsOpen;
-	sleep(2);
+	// sleep(2);
     websocketLoop(actionHandler);
 }

@@ -150,6 +150,24 @@
               tension: 0.4
             },
             {
+                label: 'Humidity Inside',
+                data: [20, 21, 21, 24, 25, 23, 22],
+                borderColor: "#00F",
+                backgroundColor: "#00F",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y1'
+            },
+            {
+              label: 'Humidity Outside',
+              data: [20, 20, 21, 20, 21, 21, 20],
+              borderColor: "#00A",
+              backgroundColor: "#55F",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              yAxisID: 'y1'
+            },
+            {
                 label: 'CO2 (ppm)',
                 data: [20, 21, 21, 24, 25, 23, 22],
                 borderColor: "#0F0",
@@ -159,12 +177,46 @@
                 yAxisID: 'y2'
             },
             {
-              label: 'Door',
-              data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
+                label: 'CO (ppm)',
+                data: [20, 21, 21, 24, 25, 23, 22],
+                borderColor: "#0F0",
+                backgroundColor: "#0A0",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y3'
+            },
+            {
+                label: 'Smoke (ppm)',
+                data: [20, 21, 21, 24, 25, 23, 22],
+                borderColor: "#00F",
+                backgroundColor: "#00A",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y3'
+            },
+            {
+              label: 'Door Open',
+              data: ['YES', 'YES', 'NO', 'YES', 'NO', 'NO'],
+              borderColor: "#F00",
+              backgroundColor: "#F00",
+              //stepped: true,
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Noisy Outside',
+              data: ['YES', 'NO', 'NO', 'YES', 'YES', 'NO'],
+              borderColor: "#0F0",
+              backgroundColor: "#0F0",
+              //stepped: true,
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Do Not Disturb Active',
+              data: ['YES', 'YES', 'NO', 'NO', 'YES', 'NO'],
               borderColor: "#00F",
               backgroundColor: "#00F",
               //stepped: true,
-              yAxisID: 'y3'
+              yAxisID: 'y4'
             }
           ]
         };
@@ -191,6 +243,15 @@
                             borderColor: "#F00"
                         }
                     },
+                    y1: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#00F"
+                        }
+                    },
                     y2: {
                         type: 'linear',
                         position: 'left',
@@ -201,8 +262,17 @@
                         }
                     },
                     y3: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#0F0"
+                        }
+                    },
+                    y4: {
                         type: 'category',
-                        labels: ['OPEN', 'CLOSED'],
+                        labels: ['YES', 'NO'],
                         offset: true,
                         position: 'left',
                         stack: 'demo',
@@ -214,7 +284,6 @@
                 }
             },
         });
-
 
         const StatusDisconnected = Symbol("Disconnected")
         const StatusConnecting = Symbol("Connecting")
@@ -359,10 +428,28 @@
                 return { key: 0, value: v };
             else if (k == "temperature_outside")
                 return { key: 1, value: v };
-            else if (k == "co2")
+            if (k == "humidity_inside")
                 return { key: 2, value: v };
+            else if (k == "humidity_outside")
+                return { key: 3, value: v };
+            else if (k == "co2")
+                return { key: 4, value: v };
+            else if (k == "co") {
+                console.log("CO");
+                console.log(v);
+                return { key: 5, value: v / 1000 };
+            }
+            else if (k == "smoke") {
+                console.log("SMOKE");
+                console.log(v);
+                return { key: 6, value: v / 1000 };
+            }
             else if (k == "door_open")
-                return { key: 3, value: v ? "OPEN" : "CLOSED" };
+                return { key: 7, value: v ? "YES" : "NO" };
+            else if (k == "noisy_outside")
+                return { key: 8, value: v ? "YES" : "NO" };
+            else if (k == "do_not_disturb")
+                return { key: 9, value: v ? "YES" : "NO" };
             else
                 return null;
         }

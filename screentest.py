@@ -21,12 +21,15 @@ disp = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_h
 # result = mh_z19.read_co2valueonly()
 # print (result)
 
-# smoke_detector = GasDetection()
-# ppm = smoke_detector.percentage()
-# smoke_value = ppm[smoke_detector.SMOKE_GAS]
-# print (smoke_value)
-# smoke_value_string = str(round(smoke_value, 2))
-# smoke_value_string = "ok"
+smoke_detector = GasDetection()
+while (True):
+    # smoke_detector = GasDetection()
+    ppm = smoke_detector.percentage()
+    smoke_value = ppm[smoke_detector.SMOKE_GAS]
+    print (smoke_value)
+    print('SMOKE: {} ppm\n'.format(ppm[smoke_detector.SMOKE_GAS]))
+    # smoke_value_string = str(round(smoke_value, 2))
+    # smoke_value_string = "ok"
 
 smoke_value_string = str(mh_z19.read_co2valueonly())
 print (smoke_value_string)
