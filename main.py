@@ -54,7 +54,6 @@ def play_audio(volume, file_path, duration = 5):
     speaker = Speaker(volume, file_path)
     speaker.playForTime(duration)
     return "done"
-        
 
 class Client(object):
     
@@ -257,4 +256,6 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     image.paste(rotated, position, rotated)
 
 if __name__ == "__main__":    
+    speaker = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+    speaker.playForTime(5)
     client = Client("ws://localhost:8888/websocket", 5)
