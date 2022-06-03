@@ -63,8 +63,8 @@
                             <div class="fw-bold">Temperature inside</div>
                             The temperature inside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_inside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_temperature_inside"></span>°C
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -72,8 +72,8 @@
                             <div class="fw-bold">Humidity inside</div>
                             The humidity inside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_inside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_humidity_inside"></span>%
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -81,8 +81,8 @@
                             <div class="fw-bold">Temperature outside</div>
                             The temperature outside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_outside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_temperature_outside"></span>°C
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -90,8 +90,8 @@
                             <div class="fw-bold">Humidity outside</div>
                             The humidity outside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_outside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_humidity_outside"></span>%
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -99,8 +99,71 @@
                             <div class="fw-bold">CO2</div>
                             The CO2 levels inside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_co2">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                              <span id="visualize_co2"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">CO</div>
+                            The CO levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_co"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Smoke</div>
+                            The smoke levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_smoke"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Noisy outside</div>
+                            Is it noisy outside?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_noisy_outside"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Door open</div>
+                            Is the door open?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_door_open"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Do not disturb</div>
+                            Is the do not disturb mode activated?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_do_not_disturb"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Busy in 15 minutes</div>
+                            Will the room be used in 15 minutes?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_busy_in_15_minutes"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Favorable conditions</div>
+                            Is the room in a favorable condition now?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_favorable_conditions"></span> 
                           </span>
                         </li>
                       </ol>
@@ -345,8 +408,12 @@
                         // console.log(msg.data);
                         for(const [key, value] of Object.entries(msg.data)) {
                             var visualizationHtml = document.getElementById(`visualize_${key}`);
-                            if(visualizationHtml != null)
-                                visualizationHtml.innerHTML = value;
+                            if(visualizationHtml != null) {
+                                kv = keyValueToChartIndexValue(key, value)
+                                if (kv != null) {
+                                    visualizationHtml.innerHTML = kv.value;
+                                }
+                            }
                         }
                     }
                     else if (msg.action == "ACTION_STATUS_HISTORY") {
@@ -362,7 +429,7 @@
                         for(const [index, keyValue] of Object.entries(msg.data)) {
                             for(const [key, value] of Object.entries(keyValue)) {
                                 kv = keyValueToChartIndexValue(key, value)
-                                if (kv != null) {
+                                if (kv != null && kv.key != null) {
                                     myChart.data.datasets[kv.key].data[index] = kv.value;
                                     shouldChartUpdate = atLeastOneRecordAdded = true;
                                 }
@@ -437,12 +504,12 @@
             else if (k == "co") {
                 console.log("CO");
                 console.log(v);
-                return { key: 5, value: v / 1000 };
+                return { key: 5, value: Math.round(v * 100000) / 100000000 };
             }
             else if (k == "smoke") {
                 console.log("SMOKE");
                 console.log(v);
-                return { key: 6, value: v / 1000 };
+                return { key: 6, value: Math.round(v * 100000) / 100000000 };
             }
             else if (k == "door_open")
                 return { key: 7, value: v ? "YES" : "NO" };
@@ -450,6 +517,10 @@
                 return { key: 8, value: v ? "YES" : "NO" };
             else if (k == "do_not_disturb")
                 return { key: 9, value: v ? "YES" : "NO" };
+            else if (k == "busy_in_15_minutes")
+                return { key: null, value: v ? "YES" : "NO" };
+            else if (k == "favorable_conditions")
+                return { key: null, value: v ? "YES" : "NO" };
             else
                 return null;
         }

@@ -3,6 +3,7 @@ from multiprocessing.pool import ThreadPool
 from tornado.ioloop import IOLoop, PeriodicCallback
 from tornado import gen
 from tornado.websocket import websocket_connect
+import time
 
 # env
 from Data.SystemState import SystemState
@@ -30,9 +31,10 @@ from PIL import Image
 from PIL import ImageDraw
 from PIL import ImageFont
 import Adafruit_ILI9341 as TFT
-import Adafruit_GPIO as GPIO
 import Adafruit_GPIO.SPI as SPI
 
+# sound sensor
+import RPi.GPIO as GPIO
 
 
 THIS_CLIENT_ID = CLIENT_ID_LOGIC
@@ -42,6 +44,12 @@ DC = 18
 RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
+
+# sound sensor
+SOUND_PIN = 16
+
+# flip switch
+SWITCH_PIN = 24
 
 _workers = ThreadPool(10)
 
@@ -67,9 +75,24 @@ class Client(object):
         self.timeout = timeout
         self.ioloop = IOLoop.instance()
         self.ws = None
+        self.recentSoundMeasurement = time.time()
+        
+        #sound
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(SOUND_PIN, GPIO.IN)
+        GPIO.add_event_detect(SOUND_PIN, GPIO.BOTH, bouncetime=300)
+        GPIO.add_event_callback(SOUND_PIN, self.soundDetect)
+        
+        #switch
+        GPIO.setup(SWITCH_PIN, GPIO.IN)
+        
         print ("Setting up Gas Detection...")
         self.gas_detection = GasDetection()
         print ("Setting up TFT screen...")
+        
+        
+        
+        # SOMEHOW THIS BREAKS THE SPEAKER RUNNING IN THE BACKGROUND
         self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
         self.display.begin()
         self.status_screen()
@@ -123,11 +146,11 @@ class Client(object):
                 
             elif (msg.action == ACTION_ACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = True
-                run_background(play_audio, self.on_complete, (80, "Resources/Audio/Testing/do_not_disturb_activated.mp3", 5))
+                run_background(play_audio, self.on_complete, (30, "Resources/Audio/Testing/do_not_disturb_activated.mp3", 5))
                 
             elif (msg.action == ACTION_DEACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = False
-                run_background(play_audio, self.on_complete, (80, "Resources/Audio/Testing/do_not_disturb_deactivated.mp3", 5))
+                run_background(play_audio, self.on_complete, (30, "Resources/Audio/Testing/do_not_disturb_deactivated.mp3", 5))
                 
             elif (msg.action == ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE):
                 self.ss.temperature_outside = msg.data["temperature"]
@@ -136,11 +159,18 @@ class Client(object):
                 
             elif (msg.action == ACTION_RICKROLL):
                 print ("RICKROLLED\n")
-                run_background(play_audio, self.on_complete, (80, "Resources/Audio/Testing/demo_audio.mp3", 5))
+                s = Speaker(40, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
+                s.play()
+                # s.playForTime(5)
+                # run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))
                 
     def on_complete(self, res):
         _workers
         print("Test {0}".format(res))
+        
+    def soundDetect(self, channel):
+        print ("SOUND DETECTED", time.time() - self.recentSoundMeasurement)
+        self.recentSoundMeasurement = time.time()
 
     def keep_alive(self):
         if self.ws is None:
@@ -150,21 +180,31 @@ class Client(object):
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_ALIVE, {"user": CLIENT_ID_LOGIC, "message": msg}).toJSON())
             
     def status_update(self):
+        self.ss.do_not_disturb = (GPIO.input(SWITCH_PIN) == 1) # if the pin is high, set to True
+        
+        if (time.time() - self.recentSoundMeasurement <= 5):
+            self.ss.noisy_outside = True
+        else:
+            self.ss.noisy_outside = False
+            
         temperature_inside = readTemperatureInside()
         if (temperature_inside):
             self.ss.temperature_inside = temperature_inside
+            
         humidity_inside = readHumidityInside()
         if (humidity_inside):
             self.ss.humidity_inside = humidity_inside
+            
         co2 = mh_z19.read_co2valueonly()
         if (co2):
             self.ss.co2 = co2
-            # self.status_screen(str(co2))
+            
         ppm = self.gas_detection.percentage()
         if (ppm):
             self.ss.co = ppm[self.gas_detection.CO_GAS] * 1000
             self.ss.smoke = ppm[self.gas_detection.SMOKE_GAS] * 1000
-            print (self.ss)
+            # print (self.ss)
+            
             # print('CO: {} ppm'.format(ppm[self.gas_detection.CO_GAS]))
             # print('H2: {} ppm'.format(ppm[self.gas_detection.H2_GAS]))
             # print('CH4: {} ppm'.format(ppm[self.gas_detection.CH4_GAS]))
@@ -173,8 +213,9 @@ class Client(object):
             # print('ALCOHOL: {} ppm'.format(ppm[self.gas_detection.ALCOHOL_GAS]))
             # print('SMOKE: {} ppm\n'.format(ppm[self.gas_detection.SMOKE_GAS]))
         
-        self.status_screen()
+        # self.status_screen()
         
+        self.status_screen()
         ssDict = vars(self.ss)
         systemDatabase.insert(ssDict)
         # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
@@ -188,6 +229,7 @@ class Client(object):
             print ("Sending status update went wrong.")
             
     def status_screen(self):
+        print ("status_screen")
         self.display.clear((255,255,255))
 
         draw = self.display.draw()
@@ -211,7 +253,7 @@ class Client(object):
         index += "CO Concentration\n"
         index += "Smoke Concentration\n"
         index += "Door\n"
-        index += "Mode\n"
+        index += "Do not disturb active?\n"
         index += "Noisy outside?\n"
         index += "Class used in 15 min?\n"
         index += "Favorable conditions?"
@@ -227,10 +269,12 @@ class Client(object):
             values += "Unknown\n"
         else:
             values += str(("Closed","Open")[self.ss.door_open]) + "\n"
-        values += str(("None","Do not disturb")[self.ss.do_not_disturb]) + "\n"
+        values += str(("No","Yes")[self.ss.do_not_disturb]) + "\n"
         values += str(("No","Yes")[self.ss.noisy_outside]) + "\n"
         values += str(("No","Yes")[self.ss.busy_in_15_minutes]) + "\n"
         values += str(("No","Yes")[self.ss.favorable_conditions])
+        
+        # print ("\n\n\n",self.ss.noisy_outside,"\n\n\n")
         
         # draw_rotated_text(self.display.buffer, 'smoke value: ', (150, 200), 90, text, fill=(0,0,0))
         # draw_rotated_text(self.display.buffer, "{:.4f} ppm".format(self.ss.smoke / 1000), (170, 230), 90, text, fill=(0,0,0))
@@ -256,6 +300,12 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     image.paste(rotated, position, rotated)
 
 if __name__ == "__main__":    
+    print ("a")
     speaker = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
     speaker.playForTime(5)
+    print ("b")
+    # print ("c")
+    # a = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+    # a.playForTime(5)
+    # print ("d")
     client = Client("ws://localhost:8888/websocket", 5)

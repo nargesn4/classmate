@@ -20,17 +20,6 @@ void setup() {
 	setupDoor();
 }
 
-// bool doorIsOpen = true;
-
 void loop() {
-	// if (doorIsOpen) {
-	// 	actionHandler("ACTION_CLOSE_DOOR");
-	// }
-	// else {
-	// 	actionHandler("ACTION_OPEN_DOOR");
-	// }
-	
-	// doorIsOpen = !doorIsOpen;
-	// sleep(2);
     websocketLoop(actionHandler);
 }

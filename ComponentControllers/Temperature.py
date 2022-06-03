@@ -1,6 +1,7 @@
 import adafruit_dht 
+import board
  
-sensor = adafruit_dht.DHT22(20, False)
+sensor = adafruit_dht.DHT22(board.D20, False)
 trash = ""
 
 def readTemperatureInside():
