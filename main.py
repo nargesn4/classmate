@@ -40,8 +40,8 @@ import RPi.GPIO as GPIO
 THIS_CLIENT_ID = CLIENT_ID_LOGIC
 
 #display
-DC = 18
-RST = 23
+DC = 5
+RST = 6
 SPI_PORT = 0
 SPI_DEVICE = 0
 
@@ -49,7 +49,7 @@ SPI_DEVICE = 0
 SOUND_PIN = 16
 
 # flip switch
-SWITCH_PIN = 24
+SWITCH_PIN = 20
 
 _workers = ThreadPool(10)
 
@@ -159,10 +159,10 @@ class Client(object):
                 
             elif (msg.action == ACTION_RICKROLL):
                 print ("RICKROLLED\n")
-                s = Speaker(40, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
-                s.play()
+                # s = Speaker(40, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
+                # s.play()
                 # s.playForTime(5)
-                # run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))
+                run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))
                 
     def on_complete(self, res):
         _workers
@@ -300,10 +300,10 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
     image.paste(rotated, position, rotated)
 
 if __name__ == "__main__":    
-    print ("a")
-    speaker = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
-    speaker.playForTime(5)
-    print ("b")
+    # print ("a")
+    # speaker = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+    # speaker.playForTime(5)
+    # print ("b")
     # print ("c")
     # a = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
     # a.playForTime(5)
