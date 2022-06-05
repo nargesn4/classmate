@@ -86,16 +86,14 @@ class Client(object):
         #switch
         GPIO.setup(SWITCH_PIN, GPIO.IN)
         
-        print ("Setting up Gas Detection...")
-        self.gas_detection = GasDetection()
         print ("Setting up TFT screen...")
-        
-        
-        
-        # SOMEHOW THIS BREAKS THE SPEAKER RUNNING IN THE BACKGROUND
         self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
         self.display.begin()
         self.inititalize_screen()
+        
+        print ("Setting up Gas Detection...")
+        self.gas_detection = GasDetection()
+        
         print ("Connecting to WebSocket Server...")
         self.connect()
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
@@ -218,49 +216,46 @@ class Client(object):
         # self.status_screen()
         
         
-        favorable_conditions = True
-        print ("favorable_conditions:")
+        force_open_door = False
+        open_door_points = 0
+        # print ("favorable_conditions:")
         # print (self.ss.smoke)
         print (self.ss.temperature_inside + 1)
         if (self.ss.smoke > 40):
-            self.favorable_conditions = False
-            print ("Concentration of smoke too high.")
-            # play alarm
+            force_open_door = True
+            # print ("Concentration of smoke too high.")
+            # play alarm            
+                
+        if (self.ss.co2 >= 800):
+            open_door_points += ((self.ss.co2 - 800) / 100)
+            # print ("Concentration of CO2 too high.")
             
-        elif self.ss.noisy_outside and self.ss.do_not_disturb:
+        temperature_difference = self.ss.temperature_inside - self.ss.temperature_outside
+        if (temperature_difference >= 1):
+            open_door_points += temperature_difference
+            # print ("Temperature inside too high.")
+            
+        humidity_difference = self.ss.humidity_inside - self.ss.humidity_outside
+        if (humidity_difference >= 10):
+            open_door_points += (humidity_difference / 10)
+            # print ("Humidity inside high.")
+            
+        if (open_door_points <= 2):
+            self.ss.favorable_conditions = True
+        
+        if self.ss.noisy_outside and self.ss.do_not_disturb:
             # if it's noisy and do not disturb is activated
             #   we should fake that the conditions are favorable
             #   so the door will be closed
-            favorable_conditions = True
-            print ("Noisy")
-                
-        elif (self.ss.co2 > 1000):
-            favorable_conditions = False
-            print ("Concentration of CO2 too high.")
+            open_door_points -= 5
             
-        elif (self.ss.temperature_inside > (self.ss.temperature_outside + 1)):
-            favorable_conditions = False
-            print ("Temperature inside too high.")
-            
-        elif (self.ss.humidity_inside > (self.ss.humidity_outside * 2)):
-            favorable_conditions = False
-            print ("Humidity inside high.")
-            
+        print (open_door_points)
         
-        
-        print (favorable_conditions)
-        
-        
-        
-        
-        
-        if (self.ss.favorable_conditions != favorable_conditions):
-            self.ss.favorable_conditions = favorable_conditions
-            if (favorable_conditions):
-                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "Unfavorable conditions.").toJSON())
-            else:
-                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "Favorable conditions.").toJSON())
-
+        if (open_door_points <= 2):
+            if (self.ss.door_open == True):
+                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "").toJSON())
+        elif (self.ss.door_open == False or self.ss.door_open == None):
+            self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "").toJSON())
         
         self.status_screen()
         ssDict = vars(self.ss)
@@ -289,8 +284,8 @@ class Client(object):
         subTitleFont = ImageFont.truetype("arial.ttf", 16)
         
         draw_rotated_text(self.display.buffer, "ClassMate", (24, 22), 0, titleFont, fill=(0,0,0))
-        draw_rotated_text(self.display.buffer, "Classroom State", (200, 100), 270, subTitleFont, fill=(0,0,0))
-        # draw_rotated_text(self.display.buffer, f"{self.ss.co2} ppm", (170, 10), 90, font, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, "Starting up...", (200, 100), 270, subTitleFont, fill=(0,0,0))
+
         self.display.display()
             
     def status_screen(self):
@@ -301,9 +296,6 @@ class Client(object):
 
         # Draw a green rectangle with black outline.
         draw.rectangle((0, 320, 240, 90), outline=(0,0,0), fill=(50,205,50))
-
-        # Draw a purple rectangle with yellow outline.
-        # draw.rectangle((10, 155, 110, 10), outline=(255,255,0), fill=(50,205,50))
 
         # Load default font.
         titleFont = ImageFont.truetype("arial.ttf", 40)
@@ -339,15 +331,10 @@ class Client(object):
         values += str(("No","Yes")[self.ss.busy_in_15_minutes]) + "\n"
         values += str(("No","Yes")[self.ss.favorable_conditions])
         
-        # print ("\n\n\n",self.ss.noisy_outside,"\n\n\n")
-        
-        # draw_rotated_text(self.display.buffer, 'smoke value: ', (150, 200), 90, text, fill=(0,0,0))
-        # draw_rotated_text(self.display.buffer, "{:.4f} ppm".format(self.ss.smoke / 1000), (170, 230), 90, text, fill=(0,0,0))
         draw_rotated_text(self.display.buffer, "ClassMate", (24, 22), 0, titleFont, fill=(0,0,0))
         draw_rotated_text(self.display.buffer, "Classroom State", (200, 100), 270, subTitleFont, fill=(0,0,0))
         draw_rotated_text(self.display.buffer, index, (10, 100), 270, text, fill=(0,0,0))
         draw_rotated_text(self.display.buffer, values, (10, 250), 270, text, fill=(0,0,0))
-        # draw_rotated_text(self.display.buffer, f"{self.ss.co2} ppm", (170, 10), 90, font, fill=(0,0,0))
         self.display.display()
 
 def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
