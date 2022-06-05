@@ -66,7 +66,15 @@ def play_audio(volume, file_path, duration = 5):
 class Client(object):
     
     def __init__(self, url, timeout):
+        run_background(play_audio, self.on_complete, (100, "Resources/Audio/mac_startup.mp3", 5))
+        
         self.ss = SystemState()
+        
+        print ("Setting up TFT screen...")
+        self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
+        self.display.begin()
+        self.inititalize_screen()
+        
         systemDatabase.truncate()
         systemDatabase.drop_tables()
         # systemDatabase.insert({"temperature_outside": 0})
@@ -77,19 +85,16 @@ class Client(object):
         self.ws = None
         self.recentSoundMeasurement = time.time()
         
-        #sound
+        # sound sensor
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(SOUND_PIN, GPIO.IN)
         GPIO.add_event_detect(SOUND_PIN, GPIO.BOTH, bouncetime=300)
         GPIO.add_event_callback(SOUND_PIN, self.soundDetect)
         
-        #switch
+        # switch
         GPIO.setup(SWITCH_PIN, GPIO.IN)
         
-        print ("Setting up TFT screen...")
-        self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
-        self.display.begin()
-        self.inititalize_screen()
+        
         
         print ("Setting up Gas Detection...")
         self.gas_detection = GasDetection()
@@ -98,7 +103,12 @@ class Client(object):
         self.connect()
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
         PeriodicCallback(self.status_update, 10000, io_loop=self.ioloop).start()
+        
+        run_background(play_audio, self.on_complete, (100, "Resources/Audio/welkom.mp3", 5))
+        
         self.ioloop.start()
+        
+
 
     @gen.coroutine
     def connect(self):
@@ -147,11 +157,11 @@ class Client(object):
                 
             elif (msg.action == ACTION_ACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = True
-                run_background(play_audio, self.on_complete, (30, "Resources/Audio/Testing/do_not_disturb_activated.mp3", 5))
+                run_background(play_audio, self.on_complete, (30, "Resources/Audio/do_not_disturb_activated.mp3", 5))
                 
             elif (msg.action == ACTION_DEACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = False
-                run_background(play_audio, self.on_complete, (30, "Resources/Audio/Testing/do_not_disturb_deactivated.mp3", 5))
+                run_background(play_audio, self.on_complete, (30, "Resources/Audio/do_not_disturb_deactivated.mp3", 5))
                 
             elif (msg.action == ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE):
                 self.ss.temperature_outside = float(msg.data["temperature"]) - 2 # with correction
@@ -159,10 +169,10 @@ class Client(object):
                 
             elif (msg.action == ACTION_RICKROLL):
                 print ("RICKROLLED\n")
-                # s = Speaker(40, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
+                # s = Speaker(40, "Resources/Audio/do_not_disturb_activated.mp3")
                 # s.play()
                 # s.playForTime(5)
-                run_background(play_audio, self.on_complete, (40, "Resources/Audio/Testing/demo_audio.mp3", 5))
+                run_background(play_audio, self.on_complete, (40, "Resources/Audio/demo_audio.mp3", 5))
 
     def on_complete(self, res):
         _workers
@@ -180,8 +190,11 @@ class Client(object):
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_ALIVE, {"user": CLIENT_ID_LOGIC, "message": msg}).toJSON())
             
     def status_update(self):
-        self.ss.do_not_disturb = (GPIO.input(SWITCH_PIN) == 1) # if the pin is high, set to True
-        
+        do_not_disturb_switch = (GPIO.input(SWITCH_PIN) == 1)
+        if (self.ss.do_not_disturb != None) and (self.ss.do_not_disturb != do_not_disturb_switch):
+            run_background(play_audio, self.on_complete, (100, "Resources/Audio/do_not_disturb_activated.mp3" if do_not_disturb_switch else "Resources/Audio/do_not_disturb_deactivated.mp3", 5))
+        self.ss.do_not_disturb = do_not_disturb_switch # if the pin is high, set to True
+
         if (time.time() - self.recentSoundMeasurement <= 5):
             self.ss.noisy_outside = True
         else:
@@ -216,28 +229,24 @@ class Client(object):
         # self.status_screen()
         
         
-        force_open_door = False
+        danger = None
         open_door_points = 0
         # print ("favorable_conditions:")
         # print (self.ss.smoke)
         print (self.ss.temperature_inside + 1)
-        if (self.ss.smoke > 40):
-            force_open_door = True
-            # print ("Concentration of smoke too high.")
-            # play alarm            
-                
+            
         if (self.ss.co2 >= 800):
             open_door_points += ((self.ss.co2 - 800) / 100)
             # print ("Concentration of CO2 too high.")
             
         temperature_difference = self.ss.temperature_inside - self.ss.temperature_outside
-        if (temperature_difference >= 1):
-            open_door_points += temperature_difference
+        # if (temperature_difference >= 1):
+        open_door_points += temperature_difference
             # print ("Temperature inside too high.")
             
         humidity_difference = self.ss.humidity_inside - self.ss.humidity_outside
-        if (humidity_difference >= 10):
-            open_door_points += (humidity_difference / 10)
+        # if (humidity_difference >= 10):
+        open_door_points += (humidity_difference / 10)
             # print ("Humidity inside high.")
             
         if (open_door_points <= 2):
@@ -251,13 +260,34 @@ class Client(object):
             
         print (open_door_points)
         
-        if (open_door_points <= 2):
-            if (self.ss.door_open == True):
-                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "").toJSON())
-        elif (self.ss.door_open == False or self.ss.door_open == None):
-            self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "").toJSON())
         
-        self.status_screen()
+        # danger in increasing order:
+        #   False, None, True
+        if self.ss.smoke > 40 or self.ss.co2 > 1500:
+            danger = True
+            if not self.ss.do_not_disturb:
+                run_background(play_audio, self.on_complete, (50, "Resources/Audio/alarm.mp3", 5))
+        elif self.ss.co2 > 1100:
+            danger = True
+            if not self.ss.do_not_disturb:
+                run_background(play_audio, self.on_complete, (100, "Resources/Audio/co2_concentratie_te_hoog.mp3", 5))
+        elif open_door_points <= 3:
+            danger = False
+        else:
+            danger = None
+        
+        if (danger or open_door_points > 2) and (self.ss.door_open == False or self.ss.door_open == None):
+            self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "").toJSON())
+        elif (not danger) and (open_door_points <= 2) and (self.ss.door_open == True):
+            self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "").toJSON())
+        
+        if (danger == False):
+            self.status_screen((50,205,50))
+        elif (danger == True):
+            self.status_screen((205,50,50))
+        else:
+            self.status_screen((50,100,50))
+            
         ssDict = vars(self.ss)
         systemDatabase.insert(ssDict)
         # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
@@ -271,7 +301,6 @@ class Client(object):
             print ("Sending status update went wrong.")
             
     def inititalize_screen(self):
-        # print ("status_screen")
         self.display.clear((255,255,255))
 
         draw = self.display.draw()
@@ -288,14 +317,13 @@ class Client(object):
 
         self.display.display()
             
-    def status_screen(self):
-        print ("status_screen")
+    def status_screen(self, fill_parameter = (50,205,50)):
         self.display.clear((255,255,255))
 
         draw = self.display.draw()
 
         # Draw a green rectangle with black outline.
-        draw.rectangle((0, 320, 240, 90), outline=(0,0,0), fill=(50,205,50))
+        draw.rectangle((0, 320, 240, 90), outline=(0,0,0), fill=fill_parameter)
 
         # Load default font.
         titleFont = ImageFont.truetype("arial.ttf", 40)
@@ -353,11 +381,11 @@ def draw_rotated_text(image, text, position, angle, font, fill=(255,255,255)):
 
 if __name__ == "__main__":    
     # print ("a")
-    # speaker = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+    # speaker = Speaker(50, "Resources/Audio/demo_audio.mp3")
     # speaker.playForTime(5)
     # print ("b")
     # print ("c")
-    # a = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+    # a = Speaker(50, "Resources/Audio/demo_audio.mp3")
     # a.playForTime(5)
     # print ("d")
     client = Client("ws://localhost:8888/websocket", 5)

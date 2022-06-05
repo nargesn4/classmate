@@ -14,7 +14,7 @@ class SystemState:
     smoke: int = 0
     noisy_outside: bool = False
     door_open: bool = None
-    do_not_disturb: bool = False
+    do_not_disturb: bool = None
     busy_in_15_minutes: bool = False
     favorable_conditions: bool = True
     
