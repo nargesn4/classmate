@@ -95,7 +95,7 @@ class Client(object):
         # SOMEHOW THIS BREAKS THE SPEAKER RUNNING IN THE BACKGROUND
         self.display = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
         self.display.begin()
-        self.status_screen()
+        self.inititalize_screen()
         print ("Connecting to WebSocket Server...")
         self.connect()
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
@@ -138,11 +138,14 @@ class Client(object):
             
             if (msg.action == ACTION_CHAT):
                 print(msg.client_id, msg.action, '|', msg.data["user"], ": ", msg.data["message"])
+            
             elif (msg.action == CALLBACK_DOOR_OPENED): # If the door was opened after it's been requested to do so:
                 self.ss.door_open = True
+                self.status_screen()
                 
             elif (msg.action == CALLBACK_DOOR_CLOSED): # If the door was closed after it's been requested to do so:
                 self.ss.door_open = False
+                self.status_screen()
                 
             elif (msg.action == ACTION_ACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = True
@@ -153,17 +156,16 @@ class Client(object):
                 run_background(play_audio, self.on_complete, (30, "Resources/Audio/Testing/do_not_disturb_deactivated.mp3", 5))
                 
             elif (msg.action == ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE):
-                self.ss.temperature_outside = msg.data["temperature"]
-                #self.ss.temperature_outside -= 4 # correction of -4 degrees celcius
-                self.ss.humidity_outside = msg.data["humidity"]
+                self.ss.temperature_outside = float(msg.data["temperature"]) - 2 # with correction
+                self.ss.humidity_outside = float(msg.data["humidity"]) - 10 # with correction
                 
             elif (msg.action == ACTION_RICKROLL):
                 print ("RICKROLLED\n")
                 # s = Speaker(40, "Resources/Audio/Testing/do_not_disturb_activated.mp3")
                 # s.play()
                 # s.playForTime(5)
-                run_background(play_audio, self.on_complete, (50, "Resources/Audio/Testing/demo_audio.mp3", 5))
-                
+                run_background(play_audio, self.on_complete, (40, "Resources/Audio/Testing/demo_audio.mp3", 5))
+
     def on_complete(self, res):
         _workers
         print("Test {0}".format(res))
@@ -215,6 +217,51 @@ class Client(object):
         
         # self.status_screen()
         
+        
+        favorable_conditions = True
+        print ("favorable_conditions:")
+        # print (self.ss.smoke)
+        print (self.ss.temperature_inside + 1)
+        if (self.ss.smoke > 40):
+            self.favorable_conditions = False
+            print ("Concentration of smoke too high.")
+            # play alarm
+            
+        elif self.ss.noisy_outside and self.ss.do_not_disturb:
+            # if it's noisy and do not disturb is activated
+            #   we should fake that the conditions are favorable
+            #   so the door will be closed
+            favorable_conditions = True
+            print ("Noisy")
+                
+        elif (self.ss.co2 > 1000):
+            favorable_conditions = False
+            print ("Concentration of CO2 too high.")
+            
+        elif (self.ss.temperature_inside > (self.ss.temperature_outside + 1)):
+            favorable_conditions = False
+            print ("Temperature inside too high.")
+            
+        elif (self.ss.humidity_inside > (self.ss.humidity_outside * 2)):
+            favorable_conditions = False
+            print ("Humidity inside high.")
+            
+        
+        
+        print (favorable_conditions)
+        
+        
+        
+        
+        
+        if (self.ss.favorable_conditions != favorable_conditions):
+            self.ss.favorable_conditions = favorable_conditions
+            if (favorable_conditions):
+                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "Unfavorable conditions.").toJSON())
+            else:
+                self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "Favorable conditions.").toJSON())
+
+        
         self.status_screen()
         ssDict = vars(self.ss)
         systemDatabase.insert(ssDict)
@@ -227,6 +274,24 @@ class Client(object):
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_STATUS_HISTORY, historic_data).toJSON())
         except Exception as e:
             print ("Sending status update went wrong.")
+            
+    def inititalize_screen(self):
+        # print ("status_screen")
+        self.display.clear((255,255,255))
+
+        draw = self.display.draw()
+
+        # Draw a green rectangle with black outline.
+        draw.rectangle((0, 320, 240, 90), outline=(0,0,0), fill=(50,205,50))
+
+        # Load default font.
+        titleFont = ImageFont.truetype("arial.ttf", 40)
+        subTitleFont = ImageFont.truetype("arial.ttf", 16)
+        
+        draw_rotated_text(self.display.buffer, "ClassMate", (24, 22), 0, titleFont, fill=(0,0,0))
+        draw_rotated_text(self.display.buffer, "Classroom State", (200, 100), 270, subTitleFont, fill=(0,0,0))
+        # draw_rotated_text(self.display.buffer, f"{self.ss.co2} ppm", (170, 10), 90, font, fill=(0,0,0))
+        self.display.display()
             
     def status_screen(self):
         print ("status_screen")

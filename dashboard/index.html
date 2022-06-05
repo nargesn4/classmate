@@ -453,7 +453,7 @@
                         console.log(data_size);
                         myChart.update();*/
                     }
-                    else if (!msg.client_id == "CLIENT_ID_ESP_TEMPERATURE_HUMIDITY")
+                    else if (!msg.action == "ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE")
                         printMessage(msg.client_id + ' ' + msg.action)
                     //else
                     //    printMessage(messageDict.client_id + ' ' + messageDict.action)

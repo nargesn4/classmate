@@ -5,10 +5,10 @@ from numpy import double
 
 @dataclass
 class SystemState:
-    temperature_inside: int = 20
-    humidity_inside: int = 50
-    temperature_outside: int = 20
-    humidity_outside: int = 50
+    temperature_inside: float = 20
+    humidity_inside: float = 50
+    temperature_outside: float = 20
+    humidity_outside: float = 50
     co2: int = 700
     co: int = 0
     smoke: int = 0
