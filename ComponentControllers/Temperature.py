@@ -9,7 +9,7 @@ def readTemperatureInside():
     return sensor.temperature
   except Exception as e:
     trash = e
-    print (e)
+    # print (e)
 
 
 def readHumidityInside():
@@ -17,4 +17,4 @@ def readHumidityInside():
     return sensor.humidity
   except Exception as e:
     trash = e
-    print (e)
+    # print (e)

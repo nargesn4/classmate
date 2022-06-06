@@ -62,7 +62,7 @@ class Speaker:
         self.m = instance.media_new(file_path) 
         self.p.set_media(self.m)
         vlc.libvlc_audio_set_volume(self.p, volume)
-        print ("done w/ setup")
+        # print ("done w/ setup")
     
     def play(self):
         self.p.play()

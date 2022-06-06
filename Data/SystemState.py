@@ -13,10 +13,14 @@ class SystemState:
     co: int = 0
     smoke: int = 0
     noisy_outside: bool = False
-    door_open: bool = None
+    door_open: bool = False
     do_not_disturb: bool = None
     busy_in_15_minutes: bool = False
     favorable_conditions: bool = True
+    points_co2: float = 0
+    points_temperature: float = 0
+    points_humidity: float = 0
+    points_noise: float = 0
     
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 

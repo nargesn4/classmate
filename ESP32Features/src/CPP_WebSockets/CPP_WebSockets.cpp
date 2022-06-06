@@ -52,13 +52,13 @@ void onMessageCallback(WebsocketsMessage message, void (*actionHandler)(String))
 
     // Test if parsing succeeds.
     if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.f_str());
+    //   Serial.print(F("deserializeJson() failed: "));
+    //   Serial.println(error.f_str());
       return;
     }
 
     String action = doc["action"].as<String>();
-    Serial.println(action);
+    // Serial.println(action);
 
     // if message received is a chat message:
     if(action == "ACTION_CHAT") {

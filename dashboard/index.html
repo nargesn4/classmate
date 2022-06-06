@@ -44,13 +44,10 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-8">
-                Plek voor grafieken
+                <!-- Plek voor grafieken -->
                 <div class="row">
-                    <div class="col-6">
-                        <canvas id="2H" width="400" height="400"></canvas>
-                    </div>
-                    <div class="col-6">
-                        <canvas id="24H" width="400" height="400"></canvas>
+                    <div class="col-12">
+                        <canvas id="main_chart" width="100%" height="80%"></canvas>
                     </div>
                 </div>
             </div>
@@ -191,57 +188,57 @@
     <script>
 
 
-        var data_size = 7;
-        const labels = ['0', '1', '2', '3', '4', '5', '6'];
+        var data_size = 0;
+        const labels = [];
         const data = {
           labels: labels,
           datasets: [
             {
                 label: 'Temperature Inside',
-                data: [20, 21, 21, 24, 25, 23, 22],
-                borderColor: "#F00",
-                backgroundColor: "#F00",
+                data: [],
+                borderColor: "#ff6600",
+                backgroundColor: "#ff944d",
                 cubicInterpolationMode: 'monotone',
                 tension: 0.4
             },
             {
               label: 'Temperature Outside',
-              data: [20, 20, 21, 20, 21, 21, 20],
-              borderColor: "#A00",
-              backgroundColor: "#F55",
+              data: [],
+              borderColor: "#ff944d",
+              backgroundColor: "#ff944d",
               cubicInterpolationMode: 'monotone',
               tension: 0.4
             },
             {
                 label: 'Humidity Inside',
-                data: [20, 21, 21, 24, 25, 23, 22],
-                borderColor: "#00F",
-                backgroundColor: "#00F",
+                data: [],
+                borderColor: "#4d88ff",
+                backgroundColor: "#4d88ff",
                 cubicInterpolationMode: 'monotone',
                 tension: 0.4,
                 yAxisID: 'y1'
             },
             {
               label: 'Humidity Outside',
-              data: [20, 20, 21, 20, 21, 21, 20],
-              borderColor: "#00A",
-              backgroundColor: "#55F",
+              data: [],
+              borderColor: "#99bbff",
+              backgroundColor: "#99bbff",
               cubicInterpolationMode: 'monotone',
               tension: 0.4,
               yAxisID: 'y1'
             },
             {
                 label: 'CO2 (ppm)',
-                data: [20, 21, 21, 24, 25, 23, 22],
-                borderColor: "#0F0",
-                backgroundColor: "#0A0",
+                data: [],
+                borderColor: "#aaaa55",
+                backgroundColor: "#aaaa55",
                 cubicInterpolationMode: 'monotone',
                 tension: 0.4,
                 yAxisID: 'y2'
             },
             {
                 label: 'CO (ppm)',
-                data: [20, 21, 21, 24, 25, 23, 22],
+                data: [],
                 borderColor: "#0F0",
                 backgroundColor: "#0A0",
                 cubicInterpolationMode: 'monotone',
@@ -250,7 +247,7 @@
             },
             {
                 label: 'Smoke (ppm)',
-                data: [20, 21, 21, 24, 25, 23, 22],
+                data: [],
                 borderColor: "#00F",
                 backgroundColor: "#00A",
                 cubicInterpolationMode: 'monotone',
@@ -259,7 +256,7 @@
             },
             {
               label: 'Door Open',
-              data: ['YES', 'YES', 'NO', 'YES', 'NO', 'NO'],
+              data: [],
               borderColor: "#F00",
               backgroundColor: "#F00",
               //stepped: true,
@@ -267,7 +264,7 @@
             },
             {
               label: 'Noisy Outside',
-              data: ['YES', 'NO', 'NO', 'YES', 'YES', 'NO'],
+              data: [],
               borderColor: "#0F0",
               backgroundColor: "#0F0",
               //stepped: true,
@@ -275,16 +272,24 @@
             },
             {
               label: 'Do Not Disturb Active',
-              data: ['YES', 'YES', 'NO', 'NO', 'YES', 'NO'],
+              data: [],
               borderColor: "#00F",
               backgroundColor: "#00F",
+              //stepped: true,
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Favorable Conditions',
+              data: [],
+              borderColor: "#000",
+              backgroundColor: "#000",
               //stepped: true,
               yAxisID: 'y4'
             }
           ]
         };
 
-        const ctx = document.getElementById('2H').getContext('2d');
+        const ctx = document.getElementById('main_chart').getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'line',
             data: data,
@@ -304,7 +309,9 @@
                         stackWeight: 2,
                         grid: {
                             borderColor: "#F00"
-                        }
+                        },
+                        suggestedMin: 20,
+                        suggestedMax: 28
                     },
                     y1: {
                         type: 'linear',
@@ -313,7 +320,9 @@
                         stackWeight: 2,
                         grid: {
                             borderColor: "#00F"
-                        }
+                        },
+                        suggestedMin: 30,
+                        suggestedMax: 80
                     },
                     y2: {
                         type: 'linear',
@@ -322,7 +331,9 @@
                         stackWeight: 2,
                         grid: {
                             borderColor: "#0F0"
-                        }
+                        },
+                        suggestedMin: 500,
+                        suggestedMax: 1000
                     },
                     y3: {
                         type: 'linear',
@@ -331,7 +342,9 @@
                         stackWeight: 2,
                         grid: {
                             borderColor: "#0F0"
-                        }
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 0.06
                     },
                     y4: {
                         type: 'category',
@@ -407,6 +420,8 @@
                         // printMessage(msg.client_id + ' ' + msg.action)
                         // console.log(msg.data);
                         for(const [key, value] of Object.entries(msg.data)) {
+                            console.log(key);
+                            console.log(value);
                             var visualizationHtml = document.getElementById(`visualize_${key}`);
                             if(visualizationHtml != null) {
                                 kv = keyValueToChartIndexValue(key, value)
@@ -420,16 +435,17 @@
                         if (msg.data.length < myChart.data.labels.length) {
                             myChart.data.labels = [];
                             for(const [index, value] of Object.entries(myChart.data.datasets)) {
-                                console.log(index);
+                                // console.log(index);
                                 myChart.data.datasets[index].data = [];
                             }
                         }
-                        console.log(msg.data.length);
+                        // console.log(msg.data.length);
                         shouldChartUpdate = atLeastOneRecordAdded = false;
                         for(const [index, keyValue] of Object.entries(msg.data)) {
                             for(const [key, value] of Object.entries(keyValue)) {
                                 kv = keyValueToChartIndexValue(key, value)
                                 if (kv != null && kv.key != null) {
+                                    // console.log(kv.key);
                                     myChart.data.datasets[kv.key].data[index] = kv.value;
                                     shouldChartUpdate = atLeastOneRecordAdded = true;
                                 }
@@ -441,27 +457,9 @@
                         if (shouldChartUpdate) {
                             myChart.update();
                         }
-
-                        /*myChart.data.labels[data_size] = data_size;
-                        myChart.data.datasets[0].data[data_size] = 15;
-                        myChart.data.datasets[1].data[data_size] = 15;
-                        myChart.data.datasets[2].data[data_size] = 'CLOSED';
-                        console.log(myChart.data.datasets[0].data);
-                        console.log(myChart.data.datasets[1].data);
-                        console.log(myChart.data.datasets[2].data);
-                        data_size++;
-                        console.log(data_size);
-                        myChart.update();*/
                     }
                     else if (!msg.action == "ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE")
                         printMessage(msg.client_id + ' ' + msg.action)
-                    //else
-                    //    printMessage(messageDict.client_id + ' ' + messageDict.action)
-                //}
-                /*catch (e) {
-                    console.log(e);
-                    printMessage("Unknown Error, a message was received but we were unable to read it.");
-                }*/
             };
         
             ws.onclose = function(e) {
@@ -491,36 +489,32 @@
 
         // key: string
         function keyValueToChartIndexValue(k, v) {
-            if (k == "temperature_inside")
+            if (k == "t_i" || k == "temperature_inside")
                 return { key: 0, value: v };
-            else if (k == "temperature_outside")
+            else if (k == "t_o" || k == "temperature_outside")
                 return { key: 1, value: v };
-            if (k == "humidity_inside")
+            else if (k == "h_i" || k == "humidity_inside")
                 return { key: 2, value: v };
-            else if (k == "humidity_outside")
+            else if (k == "h_o" || k == "humidity_outside")
                 return { key: 3, value: v };
             else if (k == "co2")
                 return { key: 4, value: v };
             else if (k == "co") {
-                console.log("CO");
-                console.log(v);
                 return { key: 5, value: Math.round(v * 100000) / 100000000 };
             }
-            else if (k == "smoke") {
-                console.log("SMOKE");
-                console.log(v);
+            else if (k == "s" || k == "smoke") {
                 return { key: 6, value: Math.round(v * 100000) / 100000000 };
             }
-            else if (k == "door_open")
+            else if (k == "d_o" || k == "door_open")
                 return { key: 7, value: v ? "YES" : "NO" };
-            else if (k == "noisy_outside")
+            else if (k == "n_o" || k == "noisy_outside")
                 return { key: 8, value: v ? "YES" : "NO" };
-            else if (k == "do_not_disturb")
+            else if (k == "d_n_d" || k == "do_not_disturb")
                 return { key: 9, value: v ? "YES" : "NO" };
             else if (k == "busy_in_15_minutes")
                 return { key: null, value: v ? "YES" : "NO" };
-            else if (k == "favorable_conditions")
-                return { key: null, value: v ? "YES" : "NO" };
+            else if (k == "f_c" || k == "favorable_conditions")
+                return { key: 10, value: v ? "YES" : "NO" };
             else
                 return null;
         }

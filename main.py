@@ -104,7 +104,9 @@ class Client(object):
         PeriodicCallback(self.keep_alive, 10000, io_loop=self.ioloop).start()
         PeriodicCallback(self.status_update, 10000, io_loop=self.ioloop).start()
         
-        run_background(play_audio, self.on_complete, (100, "Resources/Audio/welkom.mp3", 5))
+        run_background(play_audio, self.on_complete, (80, "Resources/Audio/welkom_bij_classmate.mp3", 5))
+        
+        # self.status_update()
         
         self.ioloop.start()
         
@@ -116,7 +118,7 @@ class Client(object):
         try:
             self.ws = yield websocket_connect(self.url)
         except Exception as e:
-            print("connection error")
+            print("Connection error")
         else:
             # print("connected")
             self.run()
@@ -129,7 +131,6 @@ class Client(object):
                 break
              
             msgStr = yield self.ws.read_message()
-            # print (msgStr)
             try:
                 msg = Message(None, None, None).fromJSON(msgStr)
             except:
@@ -147,39 +148,43 @@ class Client(object):
             if (msg.action == ACTION_CHAT):
                 print(msg.client_id, msg.action, '|', msg.data["user"], ": ", msg.data["message"])
             
-            elif (msg.action == CALLBACK_DOOR_OPENED): # If the door was opened after it's been requested to do so:
+            elif (msg.action == ACTION_OPEN_DOOR): # If the door was opened after it's been requested to do so:
                 self.ss.door_open = True
                 self.status_screen()
                 
-            elif (msg.action == CALLBACK_DOOR_CLOSED): # If the door was closed after it's been requested to do so:
+            elif (msg.action == ACTION_CLOSE_DOOR): # If the door was closed after it's been requested to do so:
                 self.ss.door_open = False
+                self.status_screen()
+                
+            elif (msg.action == ACTION_SET_BUSY_IN_15_MINUTES): # If the door was closed after it's been requested to do so:
+                self.ss.busy_in_15_minutes = True
+                self.status_screen()
+                
+            elif (msg.action == ACTION_SET_NOT_BUSY_IN_15_MINUTES): # If the door was closed after it's been requested to do so:
+                self.ss.busy_in_15_minutes = False
                 self.status_screen()
                 
             elif (msg.action == ACTION_ACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = True
-                run_background(play_audio, self.on_complete, (30, "Resources/Audio/do_not_disturb_activated.mp3", 5))
+                run_background(play_audio, self.on_complete, (50, "Resources/Audio/do_not_disturb_activated.mp3", 5))
                 
             elif (msg.action == ACTION_DEACTIVATE_DO_NOT_DISTURB):
                 self.ss.do_not_disturb = False
-                run_background(play_audio, self.on_complete, (30, "Resources/Audio/do_not_disturb_deactivated.mp3", 5))
+                run_background(play_audio, self.on_complete, (50, "Resources/Audio/do_not_disturb_deactivated.mp3", 5))
                 
             elif (msg.action == ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE):
                 self.ss.temperature_outside = float(msg.data["temperature"]) - 2 # with correction
                 self.ss.humidity_outside = float(msg.data["humidity"]) - 10 # with correction
                 
             elif (msg.action == ACTION_RICKROLL):
-                print ("RICKROLLED\n")
-                # s = Speaker(40, "Resources/Audio/do_not_disturb_activated.mp3")
-                # s.play()
-                # s.playForTime(5)
-                run_background(play_audio, self.on_complete, (40, "Resources/Audio/demo_audio.mp3", 5))
+                run_background(play_audio, self.on_complete, (100, "Resources/Audio/demo_audio.mp3", 5))
 
     def on_complete(self, res):
         _workers
-        print("Test {0}".format(res))
+        # print("Test {0}".format(res))
         
     def soundDetect(self, channel):
-        print ("SOUND DETECTED", time.time() - self.recentSoundMeasurement)
+        # print ("SOUND DETECTED", time.time() - self.recentSoundMeasurement)
         self.recentSoundMeasurement = time.time()
 
     def keep_alive(self):
@@ -216,39 +221,18 @@ class Client(object):
         if (ppm):
             self.ss.co = ppm[self.gas_detection.CO_GAS] * 1000
             self.ss.smoke = ppm[self.gas_detection.SMOKE_GAS] * 1000
-            # print (self.ss)
-            
-            # print('CO: {} ppm'.format(ppm[self.gas_detection.CO_GAS]))
-            # print('H2: {} ppm'.format(ppm[self.gas_detection.H2_GAS]))
-            # print('CH4: {} ppm'.format(ppm[self.gas_detection.CH4_GAS]))
-            # print('LPG: {} ppm'.format(ppm[self.gas_detection.LPG_GAS]))
-            # print('PROPANE: {} ppm'.format(ppm[self.gas_detection.PROPANE_GAS]))
-            # print('ALCOHOL: {} ppm'.format(ppm[self.gas_detection.ALCOHOL_GAS]))
-            # print('SMOKE: {} ppm\n'.format(ppm[self.gas_detection.SMOKE_GAS]))
-        
-        # self.status_screen()
-        
         
         danger = None
         open_door_points = 0
-        # print ("favorable_conditions:")
-        # print (self.ss.smoke)
-        print (self.ss.temperature_inside + 1)
             
-        if (self.ss.co2 >= 800):
-            open_door_points += ((self.ss.co2 - 800) / 100)
-            # print ("Concentration of CO2 too high.")
+        self.ss.points_co2 = ((self.ss.co2 - 800) / 100)
             
-        temperature_difference = self.ss.temperature_inside - self.ss.temperature_outside
-        # if (temperature_difference >= 1):
-        open_door_points += temperature_difference
-            # print ("Temperature inside too high.")
+        self.ss.points_temperature = self.ss.temperature_inside - self.ss.temperature_outside
             
-        humidity_difference = self.ss.humidity_inside - self.ss.humidity_outside
-        # if (humidity_difference >= 10):
-        open_door_points += (humidity_difference / 10)
-            # print ("Humidity inside high.")
-            
+        self.ss.points_humidity = ((self.ss.humidity_inside - self.ss.humidity_outside) / 10)
+        
+        open_door_points = self.ss.points_co2 + self.ss.points_temperature + self.ss.points_humidity
+        
         if (open_door_points <= 2):
             self.ss.favorable_conditions = True
         
@@ -258,27 +242,37 @@ class Client(object):
             #   so the door will be closed
             open_door_points -= 5
             
-        print (open_door_points)
-        
+        print ("'Open door points':", open_door_points)
         
         # danger in increasing order:
         #   False, None, True
-        if self.ss.smoke > 40 or self.ss.co2 > 1500:
+        
+        if self.ss.smoke > 40:
             danger = True
-            if not self.ss.do_not_disturb:
-                run_background(play_audio, self.on_complete, (50, "Resources/Audio/alarm.mp3", 5))
+            # if not self.ss.do_not_disturb:
+            run_background(play_audio, self.on_complete, (50, "Resources/Audio/alarm.mp3", 5))
+        elif self.ss.co2 > 1500:
+            danger = True
+            if not self.ss.do_not_disturb or self.ss.co2 > 1800:
+                run_background(play_audio, self.on_complete, (80, "Resources/Audio/co2_gevaarlijk_hoog.mp3", 5))
+        elif self.ss.co2 > 1300:
+            danger = True
+            # if not self.ss.do_not_disturb: run_background(play_audio, self.on_complete, (80, "Resources/Audio/co2_te_hoog.mp3", 5))
         elif self.ss.co2 > 1100:
             danger = True
-            if not self.ss.do_not_disturb:
-                run_background(play_audio, self.on_complete, (100, "Resources/Audio/co2_concentratie_te_hoog.mp3", 5))
+            # if not self.ss.do_not_disturb: run_background(play_audio, self.on_complete, (80, "Resources/Audio/co2_hoog.mp3", 5))
         elif open_door_points <= 3:
             danger = False
         else:
             danger = None
+
+        print (danger)
         
-        if (danger or open_door_points > 2) and (self.ss.door_open == False or self.ss.door_open == None):
+        if (danger or open_door_points > 2 or ((open_door_points > 0) and (self.ss.busy_in_15_minutes == True))) and (self.ss.door_open == False or self.ss.door_open == None):
+            print ("Opening door...")
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_OPEN_DOOR, "").toJSON())
         elif (not danger) and (open_door_points <= 2) and (self.ss.door_open == True):
+            print ("Closing door...")
             self.ws.write_message(Message(THIS_CLIENT_ID, ACTION_CLOSE_DOOR, "").toJSON())
         
         if (danger == False):
@@ -288,8 +282,25 @@ class Client(object):
         else:
             self.status_screen((50,100,50))
             
+        
+        self.ss.favorable_conditions = False if (danger != False) else True
+            
         ssDict = vars(self.ss)
-        systemDatabase.insert(ssDict)
+        dbDict = {
+            "t_i": self.ss.temperature_inside,
+            "t_o": self.ss.temperature_outside,
+            "h_i": self.ss.humidity_inside,
+            "h_o": self.ss.humidity_outside,
+            "co2": self.ss.co2,
+            "co": self.ss.co,
+            "s": self.ss.smoke,
+            "n_o": self.ss.noisy_outside,
+            "d_o": self.ss.door_open,
+            "d_n_d": self.ss.do_not_disturb,
+            "f_c": self.ss.favorable_conditions
+        }
+        
+        systemDatabase.insert(dbDict)
         # the data above should also be written to a database, for easy history / algoritmic usage and plotting.
         # should include time
         historic_data = systemDatabase.all()
@@ -330,6 +341,8 @@ class Client(object):
         subTitleFont = ImageFont.truetype("arial.ttf", 16)
         text = ImageFont.truetype("arial.ttf", 12)
         
+        index = values = ""
+        
         index = "Temperature Inside\n"
         index += "Temperature Outside\n"
         index += "Humidity Inside\n"
@@ -343,13 +356,22 @@ class Client(object):
         index += "Class used in 15 min?\n"
         index += "Favorable conditions?"
         
-        values = str(self.ss.temperature_inside) + "°C\n"
+        for _ in range(max(0,int(self.ss.points_temperature))): values += "!"
+        values += str(self.ss.temperature_inside) + "°C\n"
         values += str(self.ss.temperature_outside) + "°C\n"
+        
+        for _ in range(max(0,int(self.ss.points_humidity))): values += "!"
         values += str(self.ss.humidity_inside) + "%\n"
         values += str(self.ss.humidity_outside) + "%\n"
+        
+        for _ in range(max(0,int(self.ss.points_co2))): values += "!"
         values += str(self.ss.co2) + " ppm\n"
+        
         values += str("{:.4f} ppm".format(self.ss.co / 1000)) + "\n"
+        
+        for _ in range(max(0,int((self.ss.smoke - 40) / 10))): values += "!"
         values += str("{:.4f} ppm".format(self.ss.smoke / 1000)) + "\n"
+        
         if (self.ss.door_open == None):
             values += "Unknown\n"
         else:
