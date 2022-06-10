@@ -25,7 +25,7 @@ using namespace websockets;
 
 const char* ssid = "LAPTOP-JESSE"; //Enter SSID
 const char* password = "D1SL4PT0P"; //Enter Password
-const char* websockets_server_host = "192.168.137.134"; //Enter server adress
+const char* websockets_server_host = "192.168.137.101"; //Enter server adress
 const uint16_t websockets_server_port = 8888; // Enter server port
 
 unsigned long keepAlivePrevMillis = 0;
@@ -38,26 +38,27 @@ void sendData(String action = "ACTION_CHAT", String json_data_string = "\"{\"use
     client.send("{\"client_id\": \"" + client_id + "\", \"action\": \"" + action + "\", \"data\": " + json_data_string + "}");
 }
 
-void sendMessage(String message, String action = "ACTION_CHAT", String user = "Door/Fan") {
+void sendMessage(String message, String action = "ACTION_CHAT", String user = client_id) {
     sendData(action, "{\"user\": \"" + user + "\", \"message\": \"" + message + "\"}");
 }
 
-void onMessageCallback(WebsocketsMessage message) {
+void onMessageCallback(WebsocketsMessage message, void (*actionHandler)(String)) {
 
     // Allocate the JSON document
-    StaticJsonDocument<600> doc;
+    StaticJsonDocument<500> doc;
 
     // Deserialize the JSON document
     DeserializationError error = deserializeJson(doc, message.data());
 
     // Test if parsing succeeds.
     if (error) {
-      Serial.print(F("deserializeJson() failed: "));
-      Serial.println(error.f_str());
+    //   Serial.print(F("deserializeJson() failed: "));
+    //   Serial.println(error.f_str());
       return;
     }
 
     String action = doc["action"].as<String>();
+    // Serial.println(action);
 
     // if message received is a chat message:
     if(action == "ACTION_CHAT") {
@@ -66,6 +67,7 @@ void onMessageCallback(WebsocketsMessage message) {
         //   sendMessage("I received something! Pong!");
       }
     }
+    actionHandler(action);
 }
 
 void onEventsCallback(WebsocketsEvent event, String data) {
@@ -93,9 +95,11 @@ void connectWiFi() {
     Serial.println();
 }
 
-void connectSocket() {
+void connectSocket(void (*actionHandler)(String)) {
     // run callback when messages are received
-    client.onMessage(onMessageCallback);
+    client.onMessage([actionHandler](WebsocketsMessage message) -> void {
+        onMessageCallback(message, actionHandler);
+    });
     
     // run callback when events are occuring
     client.onEvent(onEventsCallback);
@@ -104,16 +108,16 @@ void connectSocket() {
     client.connect(websockets_server_host, websockets_server_port, "/websocket");
 
     // Send a message
-    sendMessage("Hey y'all, I've joined the system. It's my task to open/close the door and to turn the fan on/off.");
+    sendMessage("Hey y'all, I've joined the system.");
 }
 
-void setupWebsocket(String _client_id) {
+void setupWebsocket(String _client_id, void (*actionHandler)(String)) {
     client_id = _client_id;
     connectWiFi();
-    connectSocket();
+    connectSocket(actionHandler);
 }
 
-void websocketLoop() {
+void websocketLoop(void (*actionHandler)(String)) {
     client.poll();
 
     if (millis() - keepAlivePrevMillis >= keepAliveIntervalMs) {
@@ -123,7 +127,7 @@ void websocketLoop() {
 
     if(not client.available()) {
         Serial.println("WebSocket server is unavailable. Connecting...");
-        connectSocket();
+        connectSocket(actionHandler);
         delay(5000);
     }
 }

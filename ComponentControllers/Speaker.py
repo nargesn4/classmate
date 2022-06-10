@@ -62,6 +62,7 @@ class Speaker:
         self.m = instance.media_new(file_path) 
         self.p.set_media(self.m)
         vlc.libvlc_audio_set_volume(self.p, volume)
+        # print ("done w/ setup")
     
     def play(self):
         self.p.play()
@@ -74,6 +75,10 @@ class Speaker:
         time.sleep(duration)
         self.p.pause()
         
+# s = Speaker(50, "Resources/Audio/Testing/demo_audio.mp3")
+# s.play()
+# time.sleep(50)
+# s.pause()
    
 # example code
 #doNotDisturbActivated = Speaker(60, "Resources/Audio/Testing/do_not_disturb_activated.mp3")

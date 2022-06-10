@@ -44,13 +44,10 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-lg-8">
-                Plek voor grafieken
+                <!-- Plek voor grafieken -->
                 <div class="row">
-                    <div class="col-6">
-                        <canvas id="2H" width="400" height="400"></canvas>
-                    </div>
-                    <div class="col-6">
-                        <canvas id="24H" width="400" height="400"></canvas>
+                    <div class="col-12">
+                        <canvas id="main_chart" width="100%" height="80%"></canvas>
                     </div>
                 </div>
             </div>
@@ -63,8 +60,8 @@
                             <div class="fw-bold">Temperature inside</div>
                             The temperature inside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_inside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_temperature_inside"></span>°C
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -72,8 +69,8 @@
                             <div class="fw-bold">Humidity inside</div>
                             The humidity inside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_inside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_humidity_inside"></span>%
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -81,8 +78,8 @@
                             <div class="fw-bold">Temperature outside</div>
                             The temperature outside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_temperature_outside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_temperature_outside"></span>°C
                           </span>
                         </li>
                         <li class="list-group-item d-flex justify-content-between align-items-start py-0">
@@ -90,8 +87,80 @@
                             <div class="fw-bold">Humidity outside</div>
                             The humidity outside the classroom
                           </div>
-                          <span class="badge bg-primary rounded-pill" id="visualize_humidity_outside">
-                              ?
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_humidity_outside"></span>%
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">CO2</div>
+                            The CO2 levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                              <span id="visualize_co2"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">CO</div>
+                            The CO levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_co"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Smoke</div>
+                            The smoke levels inside the classroom
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_smoke"></span> ppm
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Noisy outside</div>
+                            Is it noisy outside?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_noisy_outside"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Door open</div>
+                            Is the door open?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_door_open"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Do not disturb</div>
+                            Is the do not disturb mode activated?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_do_not_disturb"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Busy in 15 minutes</div>
+                            Will the room be used in 15 minutes?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_busy_in_15_minutes"></span> 
+                          </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-start py-0">
+                          <div class="ms-2 me-auto">
+                            <div class="fw-bold">Favorable conditions</div>
+                            Is the room in a favorable condition now?
+                          </div>
+                          <span class="badge bg-primary rounded-pill">
+                            <span id="visualize_favorable_conditions"></span> 
                           </span>
                         </li>
                       </ol>
@@ -109,7 +178,7 @@
                             <button type="submit" class="btn btn-primary btn-block w-100">Send</button>
                         </div>
                     </form>
-                    <div id="messages" class="mt-3 bg-light" style="min-height: 100px; max-height: 500px; overflow-y: scroll"></div>
+                    <div id="messages" class="mt-3 bg-light" style="min-height: 100px; max-height: 500px; overflow-y: scroll; font-size: 9px;"></div>
                 </div>
             </div>
         </div>
@@ -119,75 +188,178 @@
     <script>
 
 
-        var data_size = 7;
-        const labels = ['0', '1', '2', '3', '4', '5', '6'];
+        var data_size = 0;
+        const labels = [];
         const data = {
           labels: labels,
           datasets: [
             {
                 label: 'Temperature Inside',
-                data: [20, 21, 21, 24, 25, 23, 22],
-                borderColor: "#F00",
-                backgroundColor: "#F00",
+                data: [],
+                borderColor: "#ff6600",
+                backgroundColor: "#ff944d",
                 cubicInterpolationMode: 'monotone',
                 tension: 0.4
             },
             {
               label: 'Temperature Outside',
-              data: [20, 20, 21, 20, 21, 21, 20],
-              borderColor: "#A00",
-              backgroundColor: "#F55",
+              data: [],
+              borderColor: "#ff944d",
+              backgroundColor: "#ff944d",
               cubicInterpolationMode: 'monotone',
               tension: 0.4
             },
             {
-              label: 'Door',
-              data: ['CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'CLOSED', 'OPEN', 'OPEN'],
+                label: 'Humidity Inside',
+                data: [],
+                borderColor: "#4d88ff",
+                backgroundColor: "#4d88ff",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y1'
+            },
+            {
+              label: 'Humidity Outside',
+              data: [],
+              borderColor: "#99bbff",
+              backgroundColor: "#99bbff",
+              cubicInterpolationMode: 'monotone',
+              tension: 0.4,
+              yAxisID: 'y1'
+            },
+            {
+                label: 'CO2 (ppm)',
+                data: [],
+                borderColor: "#aaaa55",
+                backgroundColor: "#aaaa55",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y2'
+            },
+            {
+                label: 'CO (ppm)',
+                data: [],
+                borderColor: "#0F0",
+                backgroundColor: "#0A0",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y3'
+            },
+            {
+                label: 'Smoke (ppm)',
+                data: [],
+                borderColor: "#00F",
+                backgroundColor: "#00A",
+                cubicInterpolationMode: 'monotone',
+                tension: 0.4,
+                yAxisID: 'y3'
+            },
+            {
+              label: 'Door Open',
+              data: [],
+              borderColor: "#F00",
+              backgroundColor: "#F00",
+              //stepped: true,
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Noisy Outside',
+              data: [],
+              borderColor: "#0F0",
+              backgroundColor: "#0F0",
+              //stepped: true,
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Do Not Disturb Active',
+              data: [],
               borderColor: "#00F",
               backgroundColor: "#00F",
               //stepped: true,
-              yAxisID: 'y2',
+              yAxisID: 'y4'
+            },
+            {
+              label: 'Favorable Conditions',
+              data: [],
+              borderColor: "#000",
+              backgroundColor: "#000",
+              //stepped: true,
+              yAxisID: 'y4'
             }
           ]
         };
 
-        const ctx = document.getElementById('2H').getContext('2d');
+        const ctx = document.getElementById('main_chart').getContext('2d');
         const myChart = new Chart(ctx, {
             type: 'line',
             data: data,
             options: {
-            responsive: true,
-            plugins: {
-                title: {
-                display: true,
-                text: 'Stacked scales',
+                responsive: true,
+                plugins: {
+                    title: {
+                    display: true,
+                    text: 'Stacked scales',
+                    },
                 },
-            },
-            scales: {
-                y: {
-                    type: 'linear',
-                    position: 'left',
-                    stack: 'demo',
-                    stackWeight: 2,
-                    grid: {
-                        borderColor: "#F00"
-                    }
-                },
-                y2: {
-                    type: 'category',
-                    labels: ['OPEN', 'CLOSED'],
-                    offset: true,
-                    position: 'left',
-                    stack: 'demo',
-                    stackWeight: 1,
-                    grid: {
-                        borderColor: "#00F"
+                scales: {
+                    y: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#F00"
+                        },
+                        suggestedMin: 20,
+                        suggestedMax: 28
+                    },
+                    y1: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#00F"
+                        },
+                        suggestedMin: 30,
+                        suggestedMax: 80
+                    },
+                    y2: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#0F0"
+                        },
+                        suggestedMin: 500,
+                        suggestedMax: 1000
+                    },
+                    y3: {
+                        type: 'linear',
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 2,
+                        grid: {
+                            borderColor: "#0F0"
+                        },
+                        suggestedMin: 0,
+                        suggestedMax: 0.06
+                    },
+                    y4: {
+                        type: 'category',
+                        labels: ['YES', 'NO'],
+                        offset: true,
+                        position: 'left',
+                        stack: 'demo',
+                        stackWeight: 1,
+                        grid: {
+                            borderColor: "#00F"
+                        }
                     }
                 }
-            }
             },
         });
-
 
         const StatusDisconnected = Symbol("Disconnected")
         const StatusConnecting = Symbol("Connecting")
@@ -248,55 +420,46 @@
                         // printMessage(msg.client_id + ' ' + msg.action)
                         // console.log(msg.data);
                         for(const [key, value] of Object.entries(msg.data)) {
+                            console.log(key);
+                            console.log(value);
                             var visualizationHtml = document.getElementById(`visualize_${key}`);
-                            if(visualizationHtml != null)
-                                visualizationHtml.innerHTML = value;
+                            if(visualizationHtml != null) {
+                                kv = keyValueToChartIndexValue(key, value)
+                                if (kv != null) {
+                                    visualizationHtml.innerHTML = kv.value;
+                                }
+                            }
                         }
                     }
                     else if (msg.action == "ACTION_STATUS_HISTORY") {
-                        // printMessage(msg.client_id + ' ' + msg.action)
-                        console.log(msg.data)
+                        if (msg.data.length < myChart.data.labels.length) {
+                            myChart.data.labels = [];
+                            for(const [index, value] of Object.entries(myChart.data.datasets)) {
+                                // console.log(index);
+                                myChart.data.datasets[index].data = [];
+                            }
+                        }
+                        // console.log(msg.data.length);
+                        shouldChartUpdate = atLeastOneRecordAdded = false;
                         for(const [index, keyValue] of Object.entries(msg.data)) {
-                            console.log(index);
-                            console.log(keyValue);
-                            atLeastOneRecordAdded = false;
                             for(const [key, value] of Object.entries(keyValue)) {
                                 kv = keyValueToChartIndexValue(key, value)
-                                if (kv != null) {
-                                    console.log(kv);
+                                if (kv != null && kv.key != null) {
+                                    // console.log(kv.key);
                                     myChart.data.datasets[kv.key].data[index] = kv.value;
-                                    atLeastOneRecordAdded = true;
+                                    shouldChartUpdate = atLeastOneRecordAdded = true;
                                 }
                             }
-                            if (atLeastOneRecordAdded) {
+                            if (shouldChartUpdate) {
                                 myChart.data.labels[index] = index;
-                                myChart.update();
                             }
-                            /**/
-
-                            // console.log(`${key}: ${value}`);
                         }
-
-                        /*myChart.data.labels[data_size] = data_size;
-                        myChart.data.datasets[0].data[data_size] = 15;
-                        myChart.data.datasets[1].data[data_size] = 15;
-                        myChart.data.datasets[2].data[data_size] = 'CLOSED';
-                        console.log(myChart.data.datasets[0].data);
-                        console.log(myChart.data.datasets[1].data);
-                        console.log(myChart.data.datasets[2].data);
-                        data_size++;
-                        console.log(data_size);
-                        myChart.update();*/
+                        if (shouldChartUpdate) {
+                            myChart.update();
+                        }
                     }
-                    else
+                    else if (!msg.action == "ACTION_MEASURED_TEMPERATURE_AND_HUMIDITY_OUTSIDE")
                         printMessage(msg.client_id + ' ' + msg.action)
-                    //else
-                    //    printMessage(messageDict.client_id + ' ' + messageDict.action)
-                //}
-                /*catch (e) {
-                    console.log(e);
-                    printMessage("Unknown Error, a message was received but we were unable to read it.");
-                }*/
             };
         
             ws.onclose = function(e) {
@@ -326,12 +489,32 @@
 
         // key: string
         function keyValueToChartIndexValue(k, v) {
-            if (k == "temperature_inside")
+            if (k == "t_i" || k == "temperature_inside")
                 return { key: 0, value: v };
-            else if (k == "temperature_outside")
+            else if (k == "t_o" || k == "temperature_outside")
                 return { key: 1, value: v };
-            else if (k == "door_open")
-                return { key: 2, value: v ? "OPEN" : "CLOSED" };
+            else if (k == "h_i" || k == "humidity_inside")
+                return { key: 2, value: v };
+            else if (k == "h_o" || k == "humidity_outside")
+                return { key: 3, value: v };
+            else if (k == "co2")
+                return { key: 4, value: v };
+            else if (k == "co") {
+                return { key: 5, value: Math.round(v * 100000) / 100000000 };
+            }
+            else if (k == "s" || k == "smoke") {
+                return { key: 6, value: Math.round(v * 100000) / 100000000 };
+            }
+            else if (k == "d_o" || k == "door_open")
+                return { key: 7, value: v ? "YES" : "NO" };
+            else if (k == "n_o" || k == "noisy_outside")
+                return { key: 8, value: v ? "YES" : "NO" };
+            else if (k == "d_n_d" || k == "do_not_disturb")
+                return { key: 9, value: v ? "YES" : "NO" };
+            else if (k == "busy_in_15_minutes")
+                return { key: null, value: v ? "YES" : "NO" };
+            else if (k == "f_c" || k == "favorable_conditions")
+                return { key: 10, value: v ? "YES" : "NO" };
             else
                 return null;
         }

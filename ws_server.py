@@ -51,6 +51,8 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         if (msg.action == ACTION_ALIVE):
             return
         
+        # print ("1", msg.action)
+        
         # print ("goign in")
         # logDatabase.insert(msgDictionary)
         # if (logDatabaseLength % 10 == 0):
@@ -63,6 +65,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
         # print ("okay now what1")
         self.send_updates(msg.toJSON())
         self.last = time.time()
+        # print ("2", msg.action)
         # print ("okay now what2\n")
 
     @classmethod
